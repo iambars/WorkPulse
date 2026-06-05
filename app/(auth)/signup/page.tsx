@@ -1,7 +1,30 @@
-import { GoogleButton, HomeButton } from "@/components/ui";
+"use client";
+
+import { ErrorText, GoogleButton, HomeButton } from "@/components/ui";
 import Link from "next/link";
+import { useActionState, useEffect } from "react";
+import { signupAction, SignupState } from "./actions";
+import { useRouter } from "next/navigation";
+
+const initialState: SignupState = {
+  success: false,
+  redirect: null,
+  errors: {},
+};
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState(
+    signupAction,
+    initialState,
+  );
+
+  useEffect(() => {
+    if (state?.redirect) {
+      router.push(state.redirect);
+    }
+  }, [state, router]);
+
   return (
     <div className="bg-background flex min-h-screen items-center justify-center px-4">
       <div className="border-card w-full max-w-md space-y-6 rounded-xl border p-6 shadow-lg">
@@ -16,17 +39,21 @@ export default function SignUpPage() {
         </div>
 
         {/* Form */}
-        <form className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="text-primary text-sm font-medium">
                 First Name
               </label>
               <input
+                name="firstName"
                 type="text"
                 placeholder="John"
                 className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
               />
+              {state.errors?.firstName && (
+                <ErrorText message={state.errors?.firstName} />
+              )}
             </div>
 
             <div>
@@ -34,38 +61,52 @@ export default function SignUpPage() {
                 Last Name
               </label>
               <input
+                name="lastName"
                 type="text"
                 placeholder="Doe"
                 className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
               />
+              {state.errors?.lastName && (
+                <ErrorText message={state.errors?.lastName} />
+              )}
             </div>
           </div>
 
           <div>
             <label className="text-primary text-sm font-medium">
-              Email address
+              Email address{" "}
+              <span className="text-red-500 dark:text-orange-500/85">*</span>
             </label>
             <input
+              name="email"
               type="email"
               placeholder="you@example.com"
               className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
             />
+            {state.errors?.email && <ErrorText message={state.errors?.email} />}
           </div>
 
           <div>
-            <label className="text-primary text-sm font-medium">Password</label>
+            <label className="text-primary text-sm font-medium">
+              Password{" "}
+              <span className="text-red-500 dark:text-orange-500/85">*</span>
+            </label>
             <input
+              name="password"
               type="password"
               placeholder="••••••••"
               className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
             />
+            {state.errors?.password && (
+              <ErrorText message={state.errors?.password} />
+            )}
           </div>
 
           <button
             type="submit"
             className="border-border w-full rounded-md border bg-black/75 py-2 text-white/90 transition hover:bg-gray-800"
           >
-            Create Account
+            {pending ? "Signing up" : "Create Account"}
           </button>
 
           {/* Divider */}

@@ -1,6 +1,28 @@
-import { GoogleButton, HomeButton } from "@/components/ui";
+"use client";
+
+import { ErrorText, GoogleButton, HomeButton } from "@/components/ui";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
+import { loginAction, LoginState } from "./action";
+
+const initialState: LoginState = {
+  success: false,
+  redirect: null,
+  errors: {},
+};
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState(
+    loginAction,
+    initialState,
+  );
+
+  useEffect(() => {
+    if (state?.redirect) {
+      router.push(state.redirect);
+    }
+  }, [state, router]);
   return (
     <div className="bg-background flex min-h-screen items-center justify-center px-4">
       <div className="border-card w-full max-w-md space-y-6 rounded-xl border p-6 shadow-lg">
@@ -15,32 +37,40 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <form className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div>
             <label className="text-primary text-sm font-medium">
               Email address
             </label>
             <input
+              name="email"
               type="email"
               className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
               placeholder="you@example.com"
             />
+            {state.errors?.email && <ErrorText message={state.errors?.email} />}
           </div>
 
           <div>
             <label className="text-primary text-sm font-medium">Password</label>
             <input
+              name="password"
               type="password"
               className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
               placeholder="••••••••"
             />
+            {state.errors?.password && (
+              <ErrorText message={state.errors?.password} />
+            )}
           </div>
+
+          {state.errors?.form && <ErrorText message={state.errors?.form} />}
 
           <button
             type="submit"
             className="border-border w-full rounded-md border bg-black/75 py-2 text-white transition hover:bg-gray-800"
           >
-            Sign in
+            {pending ? "Signing in" : "Sign in"}
           </button>
 
           {/* Divider  */}
