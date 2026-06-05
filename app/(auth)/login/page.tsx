@@ -1,3 +1,5 @@
+import { GoogleButton, HomeButton } from "@/components/ui";
+
 export default function LoginPage() {
   return (
     <div className="bg-background flex min-h-screen items-center justify-center px-4">
@@ -20,7 +22,7 @@ export default function LoginPage() {
             </label>
             <input
               type="email"
-              className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-black focus:outline-none"
+              className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
               placeholder="you@example.com"
             />
           </div>
@@ -29,7 +31,7 @@ export default function LoginPage() {
             <label className="text-primary text-sm font-medium">Password</label>
             <input
               type="password"
-              className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-black focus:outline-none"
+              className="border-border mt-1 w-full rounded-md border px-3 py-2 focus:border-blue-600/80 focus:ring-0 focus:outline-none"
               placeholder="••••••••"
             />
           </div>
@@ -40,6 +42,19 @@ export default function LoginPage() {
           >
             Sign in
           </button>
+
+          {/* Divider  */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card text-secondary px-2">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          <GoogleButton />
         </form>
 
         {/* Demo Accounts */}
@@ -76,6 +91,8 @@ export default function LoginPage() {
           Passwords are securely hashed using{" "}
           <span className="font-semibold">bcrypt</span>.
         </p>
+
+        <HomeButton />
       </div>
     </div>
   );
