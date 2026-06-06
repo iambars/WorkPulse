@@ -1,8 +1,10 @@
 "use server";
 
+import { signIn } from "@/auth";
 import prisma from "@/lib/prisma";
 import { LoginSchema } from "@/lib/validations/auth";
 import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
 
 export type LoginState = {
   success: boolean;
@@ -82,6 +84,47 @@ export async function loginAction(
       redirect: null,
       errors: {
         form: "Something went wrong!",
+      },
+    };
+  }
+}
+
+export async function authenticate(
+  prevState: LoginState,
+  formData: FormData,
+): Promise<LoginState> {
+  try {
+    await signIn("credentials", {
+      email: formData.get("email"),
+      password: formData.get("password"),
+      redirect: false,
+    });
+
+    return {
+      success: true,
+      redirect: "/dashboard",
+      errors: {},
+    };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return {
+        success: false,
+        redirect: null,
+        errors: {
+          form:
+            error.type === "CredentialsSignin"
+              ? "Invalid credentials."
+              : "Something went wrong.",
+        },
+      };
+    }
+
+    // console.log("AUTH ERROR:", error);
+    return {
+      success: false,
+      redirect: null,
+      errors: {
+        form: "Something went wrong.",
       },
     };
   }

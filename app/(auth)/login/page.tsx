@@ -3,7 +3,7 @@
 import { ErrorText, GoogleButton, HomeButton } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
-import { loginAction, LoginState } from "./action";
+import { authenticate, LoginState } from "./action";
 
 const initialState: LoginState = {
   success: false,
@@ -13,16 +13,18 @@ const initialState: LoginState = {
 
 export default function LoginPage() {
   const router = useRouter();
+
   const [state, formAction, pending] = useActionState(
-    loginAction,
+    authenticate,
     initialState,
   );
 
   useEffect(() => {
-    if (state?.redirect) {
+    if (state?.success && state.redirect) {
       router.push(state.redirect);
     }
   }, [state, router]);
+
   return (
     <div className="bg-background flex min-h-screen items-center justify-center px-4">
       <div className="border-card w-full max-w-md space-y-6 rounded-xl border p-6 shadow-lg">
@@ -68,6 +70,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
+            disabled={pending}
             className="border-border w-full rounded-md border bg-black/75 py-2 text-white transition hover:bg-gray-800"
           >
             {pending ? "Signing in" : "Sign in"}
@@ -84,6 +87,7 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
+          {/* <GoogleButton action={handleGoogleSignIn}/> */}
           <GoogleButton />
         </form>
 
