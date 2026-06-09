@@ -94,8 +94,24 @@ export async function authenticate(
   formData: FormData,
 ): Promise<LoginState> {
   try {
+    const email = formData.get("email") as string;
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { password: true },
+    });
+
+    if (user && !user.password) {
+      return {
+        success: false,
+        redirect: null,
+        errors: {
+          form: "This account uses Google Sign-In",
+        },
+      };
+    }
+
     await signIn("credentials", {
-      email: formData.get("email"),
+      email,
       password: formData.get("password"),
       redirect: false,
     });
@@ -113,8 +129,8 @@ export async function authenticate(
         errors: {
           form:
             error.type === "CredentialsSignin"
-              ? "Invalid credentials."
-              : "Something went wrong.",
+              ? "Invalid email or password."
+              : "Authentication failed",
         },
       };
     }

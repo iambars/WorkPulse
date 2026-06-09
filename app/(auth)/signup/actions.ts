@@ -1,5 +1,6 @@
 "use server";
 
+import { signIn } from "@/auth";
 import prisma from "@/lib/prisma";
 import { SignupSchema } from "@/lib/validations/auth";
 import bcrypt from "bcryptjs";
@@ -48,6 +49,7 @@ export async function signupAction(
       where: { email },
       select: { id: true },
     });
+
     if (existing) {
       return {
         success: false,
@@ -57,22 +59,35 @@ export async function signupAction(
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
+    const cleanedFirstName = firstName?.trim() || null;
+    const cleanedLastName = lastName?.trim() || null;
 
+    // Adding the user in the database
     await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         role: "EMPLOYEE",
+        name:
+          [cleanedFirstName, cleanedLastName].filter(Boolean).join(" ") || null,
         employee: {
           create: {
-            firstName: firstName?.trim() || null,
-            lastName: lastName?.trim() || null,
+            firstName: cleanedFirstName,
+            lastName: cleanedLastName,
           },
         },
       },
     });
 
-    console.log("Signup success:", email);
+    // console.log("Signup success:", email);
+
+    // Auto Login after the signup
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
     return {
       success: true,
       redirect: "/dashboard",

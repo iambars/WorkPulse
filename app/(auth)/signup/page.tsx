@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { signupAction, SignupState } from "./actions";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 const initialState: SignupState = {
   success: false,
@@ -18,6 +19,10 @@ export default function SignUpPage() {
     signupAction,
     initialState,
   );
+
+  const handleGoogleSignIn = async () => {
+    await signIn("google", { callbackUrl: "/dashboard" });
+  };
 
   useEffect(() => {
     if (state?.redirect) {
@@ -120,7 +125,7 @@ export default function SignUpPage() {
               </span>
             </div>
           </div>
-          <GoogleButton />
+          <GoogleButton action={handleGoogleSignIn} />
         </form>
 
         {/* Login redirect */}

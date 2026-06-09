@@ -4,6 +4,7 @@ import { ErrorText, GoogleButton, HomeButton } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
 import { authenticate, LoginState } from "./action";
+import { signIn } from "next-auth/react";
 
 const initialState: LoginState = {
   success: false,
@@ -13,6 +14,10 @@ const initialState: LoginState = {
 
 export default function LoginPage() {
   const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    await signIn("google", { callbackUrl: "/dashboard" });
+  };
 
   const [state, formAction, pending] = useActionState(
     authenticate,
@@ -87,8 +92,7 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-          {/* <GoogleButton action={handleGoogleSignIn}/> */}
-          <GoogleButton />
+          <GoogleButton action={handleGoogleSignIn} />
         </form>
 
         {/* Demo Accounts */}

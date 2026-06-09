@@ -16,20 +16,43 @@ model User {
   id       String  @id @default(uuid())
   email    String  @unique
   password String?
+  name     String?
   role     Role    @default(EMPLOYEE)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  employee  Employee?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee Employee?
+  accounts Account[]
+}
+
+model Account {
+  id     String @id @default(uuid())
+  userId String
+
+  type              String
+  provider          String
+  providerAccountId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Employee {
-  id        String  @id @default(uuid())
+  id     String @id @default(uuid())
+  userId String @unique
+
   firstName String?
   lastName  String?
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @unique
+  position   String?
+  department String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([department])
 }
 
 enum Role {
