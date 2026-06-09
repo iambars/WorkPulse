@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import SignoutButton from "@/components/ui/SignoutButton";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
@@ -10,7 +9,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  console.log("session: ", session);
+  // console.log("session: ", session);
 
   if (!session) return <div>Not authenticated</div>;
   return (
@@ -26,7 +25,6 @@ export default async function DashboardPage() {
           alt="User image"
         />
       )}
-      <SignoutButton />
     </div>
   );
 }

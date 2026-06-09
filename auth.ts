@@ -46,7 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const name =
           user.employee?.firstName || user.employee?.lastName
             ? `${user.employee.firstName ?? ""} ${user.employee.lastName ?? ""}`.trim()
-            : (user.name ?? user.email);
+            : (user.name ?? null);
 
         return {
           id: user.id,
