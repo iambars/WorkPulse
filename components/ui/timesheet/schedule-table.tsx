@@ -106,10 +106,9 @@ export default function ScheduleCalendar() {
   const prevMonthLastDay = new Date(year, currentMonth, 0).getDate();
 
   return (
-    // <div className="space-y-8">
     <div className="mx-auto w-full max-w-5xl space-y-4 px-2 sm:px-4">
       {/* SHIFT SELECTOR */}
-      <div className="flex flex-wrap gap-8">
+      <div className="flex flex-wrap gap-4">
         {shifts.map((shift) => (
           <div key={shift.name} className="flex flex-col gap-2">
             <button
@@ -123,11 +122,15 @@ export default function ScheduleCalendar() {
               {shift.name}
             </button>
 
-            <span className="text-secondary border-secondary/20 invisible rounded-full border px-3 py-1.5 text-center text-xs opacity-0 transition-all peer-hover:visible peer-hover:opacity-100">
+            <span
+              className={`text-secondary border-secondary/20 invisible rounded-full border px-3 py-1.5 text-center text-xs opacity-0 transition-all peer-hover:visible peer-hover:opacity-100 ${selectedShift === shift.name && "visible opacity-100"}`}
+            >
               {shift.start} - {shift.end}
             </span>
           </div>
         ))}
+
+        <div>shift setting</div>
       </div>
 
       {/* MONTH NAVIGATION */}

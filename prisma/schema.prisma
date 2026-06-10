@@ -27,9 +27,8 @@ model User {
 }
 
 model Account {
-  id     String @id @default(uuid())
-  userId String
-
+  id                String @id @default(uuid())
+  userId            String
   type              String
   provider          String
   providerAccountId String
@@ -41,18 +40,70 @@ model Account {
 }
 
 model Employee {
-  id     String @id @default(uuid())
-  userId String @unique
-
-  firstName String?
-  lastName  String?
-
-  position   String?
-  department String?
+  id          String        @id @default(uuid())
+  userId      String        @unique
+  firstName   String?
+  lastName    String?
+  position    String?
+  department  String?
+  shifts      Shift[]
+  schedules   ScheduleDay[]
+  attendances Attendance[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([department])
+}
+
+model Shift {
+  id         String        @id @default(uuid())
+  employeeId String
+  name       String
+  startTime  String
+  endTime    String
+  color      String
+  schedules  ScheduleDay[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, name])
+}
+
+model ScheduleDay {
+  id         String   @id @default(uuid())
+  employeeId String
+  date       DateTime
+  workDay    Boolean  @default(true)
+  shiftId    String?
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift    Shift?   @relation(fields: [shiftId], references: [id])
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+model Attendance {
+  id         String    @id @default(uuid())
+  employeeId String
+  date       DateTime
+  timeIn     DateTime?
+  timeOut    DateTime?
+  remarks    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([date])
 }
 
 enum Role {
