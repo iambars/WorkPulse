@@ -12,6 +12,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 10 * 60, // 10 mins
   },
 
+  pages: {
+    signIn: "/login",
+  },
+
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -62,6 +66,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         await linkGoogleUser({ email: user.email!, name: user.name });
+      }
+      return true;
+    },
+
+    async authorized({ auth, request }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+
+      if (isOnDashboard && !isLoggedIn) {
+        return false;
       }
 
       return true;
