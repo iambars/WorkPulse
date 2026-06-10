@@ -21,7 +21,7 @@ export default function TimesheetPage() {
   return (
     <div className="w-full">
       <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="p-4">{tabContent[activeTab]}</div>
+      <div className="pt-12">{tabContent[activeTab]}</div>
     </div>
   );
 }

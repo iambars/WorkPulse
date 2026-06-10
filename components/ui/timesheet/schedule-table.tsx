@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
 
-type Row = {
+type DaySchedule = {
   date: string;
+  workDay: boolean;
   shift: string;
-  selected: boolean;
 };
 
 type Shift = {
@@ -15,204 +16,246 @@ type Shift = {
   color: string;
 };
 
-export default function ScheduleTable() {
-  const cutoffStart = new Date("2026-06-01");
-
-  const [defaultShift, setDefaultShift] = useState("SHIFT_1");
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+export default function ScheduleCalendar() {
+  const year = 2026;
 
   const [shifts] = useState<Shift[]>([
     {
       name: "SHIFT_1",
       start: "08:00",
       end: "17:00",
-      color: "bg-blue-100 text-blue-700",
+      color: "bg-blue-100 text-blue-800 border-blue-300",
     },
     {
       name: "SHIFT_2",
       start: "09:00",
       end: "18:00",
-      color: "bg-green-100 text-green-700",
+      color: "bg-green-100 text-green-800 border-green-300",
+    },
+    {
+      name: "SHIFT_3",
+      start: "13:00",
+      end: "22:00",
+      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
     },
   ]);
 
-  const [rows, setRows] = useState<Row[]>(
-    Array.from({ length: 15 }, (_, i) => {
-      const d = new Date(cutoffStart);
-      d.setDate(cutoffStart.getDate() + i);
+  const [selectedShift, setSelectedShift] = useState("SHIFT_1");
+  const [currentMonth, setCurrentMonth] = useState(5); // June
 
-      return {
-        date: d.toISOString().split("T")[0],
+  const createYearSchedule = (): DaySchedule[] => {
+    const result: DaySchedule[] = [];
+
+    for (
+      let date = new Date(year, 0, 1);
+      date <= new Date(year, 11, 31);
+      date.setDate(date.getDate() + 1)
+    ) {
+      result.push({
+        date: new Date(date).toISOString().split("T")[0],
+        workDay: true,
         shift: "SHIFT_1",
-        selected: true,
-      };
-    }),
-  );
+      });
+    }
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return result;
+  };
 
-  const getDay = (dateStr: string) =>
+  const [days, setDays] = useState<DaySchedule[]>(createYearSchedule);
+
+  const updateDay = (date: string, data: Partial<DaySchedule>) => {
+    setDays((prev) =>
+      prev.map((day) => (day.date === date ? { ...day, ...data } : day)),
+    );
+  };
+
+  const getShift = (name: string) =>
+    shifts.find((shift) => shift.name === name);
+
+  const formatTime = (time: string) => {
+    const [hourStr, minute] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+
+    return `${hour}:${minute} ${ampm}`;
+  };
+
+  const getDayName = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {
       weekday: "short",
     });
 
-  const updateRow = (index: number, data: Partial<Row>) => {
-    const copy = [...rows];
-    copy[index] = { ...copy[index], ...data };
-    setRows(copy);
-  };
+  const monthName = new Date(year, currentMonth).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
-  const applyDefaultShift = (shift: string) => {
-    setDefaultShift(shift);
+  const monthDays = useMemo(() => {
+    return days.filter((day) => {
+      const date = new Date(day.date);
 
-    setRows((prev) =>
-      prev.map((r) =>
-        r.selected
-          ? {
-              ...r,
-              shift,
-            }
-          : r,
-      ),
-    );
-  };
+      return date.getFullYear() === year && date.getMonth() === currentMonth;
+    });
+  }, [days, currentMonth]);
 
-  const getShiftStyle = (shiftName: string) => {
-    return (
-      shifts.find((s) => s.name === shiftName)?.color ??
-      "bg-gray-100 text-gray-600"
-    );
-  };
+  const firstDay = new Date(year, currentMonth, 1).getDay();
+  const offset = firstDay;
+  const prevMonthLastDay = new Date(year, currentMonth, 0).getDate();
 
   return (
-    <div className="space-y-8">
-      {/* ================= SHIFT SETTINGS ================= */}
-      <div>
-        <h2 className="mb-2 font-semibold">Shift Settings</h2>
+    // <div className="space-y-8">
+    <div className="mx-auto w-full max-w-5xl space-y-4 px-2 sm:px-4">
+      {/* SHIFT SELECTOR */}
+      <div className="flex flex-wrap gap-8">
+        {shifts.map((shift) => (
+          <div key={shift.name} className="flex flex-col gap-2">
+            <button
+              onClick={() => setSelectedShift(shift.name)}
+              className={`peer rounded-full border px-3 py-2 text-sm ${
+                selectedShift === shift.name
+                  ? "border-1.5 scale-105 shadow-md ring-1 ring-transparent"
+                  : "scale-95 opacity-40 hover:opacity-60"
+              } ${shift.color}`}
+            >
+              {shift.name}
+            </button>
 
-        <div className="mb-4">
-          <label className="text-sm font-medium">Default Shift:</label>
+            <span className="text-secondary border-secondary/20 invisible rounded-full border px-3 py-1.5 text-center text-xs opacity-0 transition-all peer-hover:visible peer-hover:opacity-100">
+              {shift.start} - {shift.end}
+            </span>
+          </div>
+        ))}
+      </div>
 
-          <select
-            value={defaultShift}
-            onChange={(e) => applyDefaultShift(e.target.value)}
-            className="ml-2 border p-1"
+      {/* MONTH NAVIGATION */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setCurrentMonth((m) => (m === 0 ? 11 : m - 1))}
+          className="border-border/10 hover:border-border/50 rounded-lg border px-3 py-2 hover:text-blue-500"
+        >
+          <ChevronLeft />
+        </button>
+
+        <h2 className="text-xl font-bold">{monthName}</h2>
+
+        <button
+          onClick={() => setCurrentMonth((m) => (m === 11 ? 0 : m + 1))}
+          className="border-border/10 hover:border-border/50 rounded-lg border px-3 py-2 hover:text-blue-500"
+        >
+          <ChevronRight />
+        </button>
+      </div>
+
+      {/* WEEK HEADER */}
+      <div className="mb-4 grid grid-cols-7 gap-2 text-center text-sm font-semibold">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div key={day} className="rounded bg-gray-100 p-2">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* CALENDAR */}
+      <div className="grid grid-cols-7 gap-2">
+        {Array.from({ length: offset }).map((_, index) => (
+          <div
+            key={`prev-${index}`}
+            className="bg-secondary/5 text-primary/20 border-secondary/10 min-h-28 rounded-lg border p-2"
           >
-            {shifts.map((s) => (
-              <option key={s.name} value={s.name}>
-                {s.name} ({s.start}-{s.end})
-              </option>
-            ))}
-          </select>
-        </div>
+            {prevMonthLastDay - offset + index + 1}
+          </div>
+        ))}
 
-        {/* TOP SHIFT TABLE (RESTORED) */}
-        <table className="w-full table-fixed border text-sm">
+        {monthDays.map((day) => {
+          const shift = getShift(day.shift);
+
+          const cardClass = day.workDay
+            ? (shift?.color ?? "bg-gray-100 text-gray-700 border-gray-300")
+            : "bg-gray-100 text-gray-400 border-gray-300";
+
+          return (
+            <button
+              key={day.date}
+              onClick={() =>
+                updateDay(day.date, {
+                  workDay: !day.workDay,
+                  shift: selectedShift,
+                })
+              }
+              className={`min-h-28 rounded-lg border p-2 text-left transition hover:scale-[1.01] ${cardClass}`}
+            >
+              <div className="flex justify-between">
+                <span className="font-semibold">
+                  {new Date(day.date).getDate()}
+                </span>
+
+                <span className="text-xs opacity-70">
+                  {getDayName(day.date)}
+                </span>
+              </div>
+
+              <div className="mt-6 text-center text-[10px] font-medium">
+                {day.workDay ? (
+                  <>
+                    <div>{shift?.start ? formatTime(shift.start) : ""}</div>
+                    <div>{shift?.end ? formatTime(shift.end) : ""}</div>
+                  </>
+                ) : (
+                  "REST DAY"
+                )}
+              </div>
+            </button>
+          );
+        })}
+
+        {Array.from({
+          length: (7 - ((offset + monthDays.length) % 7)) % 7,
+        }).map((_, index) => (
+          <div
+            key={`next-${index}`}
+            className="bg-secondary/5 text-primary/20 border-secondary/10 min-h-28 rounded-lg border p-2"
+          >
+            {index + 1}
+          </div>
+        ))}
+      </div>
+
+      {/* SHIFT TABLE */}
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Shift Settings</h2>
+
+        <table className="w-full border text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="w-40 border p-2">Shift</th>
-              <th className="w-24 border p-2">Start</th>
-              <th className="w-24 border p-2">End</th>
+              <th className="border p-2">Shift</th>
+              <th className="border p-2">Start</th>
+              <th className="border p-2">End</th>
             </tr>
           </thead>
 
           <tbody>
-            {shifts.map((s, i) => (
-              <tr key={i}>
-                <td className={`border p-2 ${s.color}`}>{s.name}</td>
-                <td className="border p-2">{s.start}</td>
-                <td className="border p-2">{s.end}</td>
+            {shifts.map((shift) => (
+              <tr key={shift.name}>
+                <td className={`border p-2 ${shift.color}`}>{shift.name}</td>
+                <td className="border p-2">{shift.start}</td>
+                <td className="border p-2">{shift.end}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* ================= ROSTER TABLE ================= */}
-      <table className="w-full table-fixed border text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="w-40 border p-2">Date</th>
-            <th className="w-24 border p-2">Day</th>
-            <th className="w-48 border p-2">Shift</th>
-            <th className="w-28 border p-2">Work Day</th>
-          </tr>
-        </thead>
+      {/* DEBUG */}
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Generated Schedule</h2>
 
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i} className="hover:bg-gray-50">
-              {/* DATE */}
-              <td className="border p-2 font-medium">{formatDate(row.date)}</td>
-
-              {/* DAY */}
-              <td className="border p-2">{getDay(row.date)}</td>
-
-              {/* SHIFT DROPDOWN */}
-              <td className="border p-2">
-                <div className="relative w-36">
-                  <div
-                    onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                    className="cursor-pointer p-1"
-                  >
-                    <span
-                      className={`inline-block w-full rounded px-2 py-1 text-xs ${getShiftStyle(
-                        row.shift,
-                      )}`}
-                    >
-                      {row.shift}
-                    </span>
-                  </div>
-
-                  {openIndex === i && (
-                    <div className="absolute z-10 mt-1 w-full border bg-white shadow">
-                      {shifts.map((s) => (
-                        <div
-                          key={s.name}
-                          onClick={() => {
-                            updateRow(i, {
-                              shift: s.name,
-                            });
-                            setOpenIndex(null);
-                          }}
-                          className="flex cursor-pointer items-center justify-between px-2 py-1 hover:bg-gray-100"
-                        >
-                          <span className="text-xs">{s.name}</span>
-
-                          <span
-                            className={`rounded px-2 py-0.5 text-[10px] ${s.color}`}
-                          >
-                            ●
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </td>
-
-              {/* WORK DAY */}
-              <td className="border p-2 text-center">
-                <input
-                  type="checkbox"
-                  checked={row.selected}
-                  onChange={() =>
-                    updateRow(i, {
-                      selected: !row.selected,
-                      shift: !row.selected ? defaultShift : row.shift,
-                    })
-                  }
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
+          {JSON.stringify(days, null, 2)}
+        </pre>
+      </div>
     </div>
   );
 }
