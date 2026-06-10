@@ -9,7 +9,7 @@ export default function SideNav() {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <aside
-      className={`border-card flex h-screen flex-col border-r shadow-lg transition-all duration-300 ${
+      className={`border-card flex h-screen shrink-0 flex-col border-r shadow-lg transition-all duration-300 ${
         collapsed ? "w-16" : "w-50"
       }`}
     >

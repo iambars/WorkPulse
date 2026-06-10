@@ -1,14 +1,14 @@
 "use client";
 
 import { clsx } from "clsx";
-import { HomeIcon } from "lucide-react";
+import { ClipboardList, HomeIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import path from "node:path";
 
 const links = [
   { name: "Home", href: "/dashboard", icon: HomeIcon },
-  { name: "Home1", href: "/dashboard1", icon: HomeIcon },
+  { name: "Time Sheet", href: "/dashboard/timesheet", icon: ClipboardList },
   { name: "Home2", href: "/dashboard2", icon: HomeIcon },
 ];
 
