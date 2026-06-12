@@ -1,9 +1,13 @@
-import ScheduleCalendar from "@/components/ui/timesheet/schedule-calendar";
+import { redirect } from "next/navigation";
+import { getDashboardContext } from "@/lib/dashboard/getDashboardContext";
+import { ScheduleCalendarClient } from "@/components/ui/timesheet";
 
-export default function SchedulePage() {
+export default async function SchedulePage() {
+  const ctx = await getDashboardContext();
+
+  if (!ctx) redirect("/login");
+
   return (
-    <div>
-      <ScheduleCalendar />
-    </div>
+    <ScheduleCalendarClient shifts={ctx.shifts} employeeId={ctx.employeeId} />
   );
 }

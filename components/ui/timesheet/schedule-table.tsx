@@ -3,13 +3,12 @@
 import { useMemo, useState } from "react";
 import { saveSchedule } from "@/actions/schedule";
 import {
-  CalendarGrid,
-  MonthNavigation,
   ShiftSelector,
   ShiftSetting,
+  MonthNavigation,
+  CalendarGrid,
 } from "@/components/schedule";
-import { DEFAULT_SHIFTS } from "@/constants/shifts";
-import { getMonthDays, useCalendarMonth } from "@/hooks/useCalendarMonth";
+import { useCalendarMonth, getMonthDays } from "@/hooks/useCalendarMonth";
 import { createYearSchedule } from "@/lib/schedule";
 import { DaySchedule, Shift } from "@/types/schedule";
 
@@ -18,16 +17,18 @@ type Props = {
   employeeId: string;
 };
 
-export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
+export default function ScheduleClient({ shifts, employeeId }: Props) {
   const year = 2026;
 
-  const initialSchedule = () => createYearSchedule(year);
+  const initialSchedule = useMemo(() => createYearSchedule(year), [year]);
 
   const [days, setDays] = useState<DaySchedule[]>(initialSchedule);
   const [draftDays, setDraftDays] = useState<DaySchedule[]>(initialSchedule);
-
   const [currentMonth, setCurrentMonth] = useState(5);
-  const [selectedShift, setSelectedShift] = useState(shifts?.[0]?.id ?? "");
+  // const [selectedShift, setSelectedShift] = useState(shifts?.[0]?.id ?? "");
+  const defaultShift = useMemo(() => shifts[0]?.name ?? "", [shifts]);
+
+  const [selectedShift, setSelectedShift] = useState(defaultShift);
   const [isSaving, setIsSaving] = useState(false);
 
   const { monthName, offset, prevMonthLastDay } = useCalendarMonth({
@@ -76,7 +77,7 @@ export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
       <button
         onClick={handleSave}
         disabled={isSaving || !hasChanges}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg bg-blue-600 px-4 py-2 text-white"
       >
         {isSaving ? "Saving..." : "Save Schedule"}
       </button>
@@ -99,17 +100,9 @@ export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
         <h2 className="mb-2 text-lg font-semibold">Shift Settings</h2>
 
         <table className="w-full border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2">Shift</th>
-              <th className="border p-2">Start</th>
-              <th className="border p-2">End</th>
-            </tr>
-          </thead>
-
           <tbody>
             {shifts.map((shift) => (
-              <tr key={shift.name}>
+              <tr key={shift.id}>
                 <td className={`border p-2 ${shift.color}`}>{shift.name}</td>
                 <td className="border p-2">{shift.startTime}</td>
                 <td className="border p-2">{shift.endTime}</td>
@@ -119,13 +112,9 @@ export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
         </table>
       </div>
 
-      <div>
-        <h2 className="mb-2 text-lg font-semibold">Generated Schedule</h2>
-
-        <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
-          {JSON.stringify(days, null, 2)}
-        </pre>
-      </div>
+      <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
+        {JSON.stringify(days, null, 2)}
+      </pre>
     </div>
   );
 }

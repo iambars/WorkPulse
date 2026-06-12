@@ -50,7 +50,8 @@ model Employee {
   schedules   ScheduleDay[]
   attendances Attendance[]
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeSettings EmployeeSetting[]
 
   @@index([department])
 }
@@ -67,7 +68,8 @@ model Shift {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee         Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeSettings EmployeeSetting[]
 
   @@unique([employeeId, name])
 }
@@ -104,6 +106,23 @@ model Attendance {
 
   @@unique([employeeId, date])
   @@index([date])
+}
+
+model EmployeeSetting {
+  id String @id @default(uuid())
+
+  employeeId     String
+  month          String
+  defaultShiftId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  defaultShift Shift    @relation(fields: [defaultShiftId], references: [id])
+
+  @@unique([employeeId, month])
+  @@index([employeeId, month])
 }
 
 enum Role {

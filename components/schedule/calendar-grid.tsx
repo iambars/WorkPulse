@@ -26,6 +26,11 @@ export default function CalendarGrid({
     [shifts],
   );
 
+  const getSafeShift = (shiftId: string | null) => {
+    if (!shiftId) return shiftMap[selectedShift];
+    return shiftMap[shiftId] ?? shiftMap[selectedShift];
+  };
+
   const updateDay = (date: string, data: Partial<DaySchedule>) => {
     setDays((prev) =>
       prev.map((day) => (day.date === date ? { ...day, ...data } : day)),
@@ -57,8 +62,8 @@ export default function CalendarGrid({
 
         {/* CURRENT MONTH */}
         {monthDays.map((day) => {
-          const shift = day.shiftId ? shiftMap[day.shiftId] : undefined;
-
+          // const shift = day.shiftId ? shiftMap[day.shiftId] : undefined;
+          const shift = getSafeShift(day.shiftId);
           const dateObj = new Date(day.date);
 
           const cardClass = `
@@ -74,15 +79,17 @@ export default function CalendarGrid({
           return (
             <button
               key={day.date}
-              aria-label={`${day.date} ${
-                day.workDay ? (shift?.name ?? "Work Day") : "Rest Day"
-              }`}
-              onClick={() =>
+              // aria-label={`${day.date} ${
+              //   day.workDay ? (shift?.name ?? "Work Day") : "Rest Day"
+              // }`}
+              onClick={() => {
+                const nextWorkDay = !day.workDay;
+
                 updateDay(day.date, {
-                  workDay: !day.workDay,
-                  shiftId: !day.workDay ? selectedShift : null,
-                })
-              }
+                  workDay: nextWorkDay,
+                  shiftId: nextWorkDay ? selectedShift : null,
+                });
+              }}
               className={cardClass}
             >
               <div className="flex justify-between">

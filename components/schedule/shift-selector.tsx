@@ -1,8 +1,6 @@
 "use client";
 
 import { Shift } from "@/types/schedule";
-import ShiftManagerModal from "./shift-manager-modal";
-import { useState } from "react";
 
 type ShiftSelectorProps = {
   shifts: Shift[];
