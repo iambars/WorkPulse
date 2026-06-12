@@ -63,12 +63,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        await linkGoogleUser({ email: user.email!, name: user.name });
-      }
-      return true;
-    },
+    // async signIn({ user, account }) {
+    //   if (account?.provider === "google") {
+    //     await linkGoogleUser({
+    //       email: user.email!,
+    //       name: user.name,
+    //     });
+    //   }
+
+    //   return true;
+    // },
 
     async authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
@@ -80,23 +84,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return true;
     },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub!;
+        session.user.role = token.role as string;
+      }
+
+      return session;
+    },
+
+    async jwt({ token, user, account, profile }) {
+      // 1. Credentials login (user is already DB user)
+      if (user) {
+        token.sub = user.id;
+        token.role = user.role;
+      }
+
+      // 2. Google login (we must map to DB user)
+      if (account?.provider === "google") {
+        const email = profile?.email;
+        if (email) {
+          const dbUser = await prisma.user.upsert({
+            where: { email },
+            update: {
+              name: profile?.name ?? undefined,
+            },
+            create: {
+              email,
+              name: profile?.name ?? null,
+              role: "EMPLOYEE",
+            },
+          });
+          token.sub = dbUser.id;
+          token.role = dbUser.role;
+        }
+      }
+
+      return token;
+    },
   },
-
-  // callbacks: {
-  //   async jwt({ token, user }) {
-  //     if (user) {
-  //       token.id = user.id;
-  //       token.role = user.role;
-  //     }
-  //     return token;
-  //   },
-
-  //   async session({ session, token }) {
-  //     if (session.user) {
-  //       session.user.id = token.id as string;
-  //       session.user.role = token.role as string;
-  //     }
-  //     return session;
-  //   },
-  // },
 });

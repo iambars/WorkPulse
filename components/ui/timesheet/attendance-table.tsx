@@ -18,7 +18,7 @@ type Shift = {
   color: string;
 };
 
-export default function TimesheetTable() {
+export default function AttendanceTable() {
   const [shifts] = useState<Shift[]>([
     { name: "SHIFT_1", color: "bg-blue-100 text-blue-700" },
     { name: "SHIFT_2", color: "bg-green-100 text-green-700" },

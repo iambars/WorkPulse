@@ -1,53 +1,44 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { saveSchedule } from "@/actions/schedule";
 import {
   CalendarGrid,
   MonthNavigation,
   ShiftSelector,
-  ShiftSetting,
 } from "@/components/schedule";
 import { DEFAULT_SHIFTS } from "@/constants/shifts";
 import { getMonthDays, useCalendarMonth } from "@/hooks/useCalendarMonth";
 import { createYearSchedule } from "@/lib/schedule";
-import { DaySchedule, Shift } from "@/types/schedule";
+import { DaySchedule } from "@/types/schedule";
+import { useMemo, useState } from "react";
 
-type Props = {
-  shifts: Shift[];
-  employeeId: string;
-};
-
-export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
+export default function ScheduleCalendar() {
   const year = 2026;
+  const shifts = DEFAULT_SHIFTS;
 
-  const initialSchedule = () => createYearSchedule(year);
-
-  const [days, setDays] = useState<DaySchedule[]>(initialSchedule);
-  const [draftDays, setDraftDays] = useState<DaySchedule[]>(initialSchedule);
-
-  const [currentMonth, setCurrentMonth] = useState(5);
-  const [selectedShift, setSelectedShift] = useState(shifts?.[0]?.id ?? "");
+  const [currentMonth, setCurrentMonth] = useState(5); // June
+  const [days, setDays] = useState<DaySchedule[]>(createYearSchedule(year));
+  const [draftDays, setDraftDays] = useState<DaySchedule[]>(
+    createYearSchedule(year),
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedShift, setSelectedShift] = useState("Shift 1");
 
   const { monthName, offset, prevMonthLastDay } = useCalendarMonth({
     year,
     month: currentMonth,
   });
 
-  const monthDays = useMemo(
-    () => getMonthDays(draftDays, year, currentMonth),
-    [draftDays, currentMonth, year],
-  );
-
-  const hasChanges = JSON.stringify(days) !== JSON.stringify(draftDays);
+  const monthDays = useMemo(() => {
+    return getMonthDays(draftDays, year, currentMonth);
+  }, [draftDays, currentMonth, year]);
 
   const handleSave = async () => {
     try {
       setIsSaving(true);
-
       await saveSchedule(
         draftDays.map((day) => ({
+          employeeId: "user 1",
           date: day.date,
           workDay: day.workDay,
           shiftId: day.shiftId ?? null,
@@ -71,14 +62,12 @@ export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
         setSelectedShift={setSelectedShift}
       />
 
-      <ShiftSetting shifts={shifts} />
-
       <button
         onClick={handleSave}
-        disabled={isSaving || !hasChanges}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={isSaving}
+        className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
       >
-        {isSaving ? "Saving..." : "Save Schedule"}
+        {isSaving ? "Saving..." : "Save Schedule"}{" "}
       </button>
 
       <MonthNavigation
@@ -95,6 +84,7 @@ export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
         selectedShift={selectedShift}
       />
 
+      {/* SHIFT TABLE */}
       <div>
         <h2 className="mb-2 text-lg font-semibold">Shift Settings</h2>
 
@@ -111,14 +101,15 @@ export default function ScheduleCalendarClient({ shifts, employeeId }: Props) {
             {shifts.map((shift) => (
               <tr key={shift.name}>
                 <td className={`border p-2 ${shift.color}`}>{shift.name}</td>
-                <td className="border p-2">{shift.startTime}</td>
-                <td className="border p-2">{shift.endTime}</td>
+                <td className="border p-2">{shift.start}</td>
+                <td className="border p-2">{shift.end}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* DEBUG */}
       <div>
         <h2 className="mb-2 text-lg font-semibold">Generated Schedule</h2>
 

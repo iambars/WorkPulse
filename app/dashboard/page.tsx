@@ -1,17 +1,17 @@
 import { auth } from "@/auth";
+import { getDashboardContext } from "@/lib/dashboard/getDashboardContext";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const ctx = await getDashboardContext();
 
-  // if (!session) {
-  //   redirect("/login");
-  // }
+  if (!ctx) {
+    redirect("/login");
+  }
 
-  // console.log("session: ", session);
+  const { session } = ctx;
 
-  if (!session) return <div>Not authenticated</div>;
   return (
     <div>
       <h1>Dashboard Page</h1>
