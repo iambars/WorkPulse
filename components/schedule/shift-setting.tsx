@@ -22,7 +22,6 @@ export default function ShiftSetting({ shifts }: ShiftSettingProps) {
     setLocalShifts(shifts ?? []);
   }, [shifts]);
 
-  // ✅ FIXED: index-based update
   const updateShift = (index: number, field: keyof Shift, value: string) => {
     setLocalShifts((prev) =>
       prev.map((shift, i) =>
@@ -65,7 +64,7 @@ export default function ShiftSetting({ shifts }: ShiftSettingProps) {
 
         <button
           onClick={addShift}
-          className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+          className="border-secondary/50 text-secondary rounded-2xl border px-3 py-1 text-sm hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
         >
           + Add Shift
         </button>

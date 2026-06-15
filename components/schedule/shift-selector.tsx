@@ -1,6 +1,8 @@
 "use client";
 
 import { Shift } from "@/types/schedule";
+import { Settings } from "lucide-react";
+import { useState } from "react";
 
 type ShiftSelectorProps = {
   shifts: Shift[];
@@ -13,7 +15,8 @@ export default function ShiftSelector({
   selectedShift,
   setSelectedShift,
 }: ShiftSelectorProps) {
-  // const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(true);
+  console.log(open);
   return (
     <div className="flex items-start justify-between">
       <div className="flex flex-wrap gap-4">
@@ -39,21 +42,14 @@ export default function ShiftSelector({
           </div>
         ))}
       </div>
-      {/* create shift */}
+
       <button
-        // onClick={() => setOpen(true)}
-        className="rounded-full border px-3 py-2 text-sm opacity-60 hover:opacity-100"
+        onClick={() => setOpen(!open)}
+        className="bg-secondary/10 text-secondary hover:text-primary hover:border-secondary/20 flex items-center gap-2 rounded-full px-4 py-2 hover:border"
       >
-        + Add Shift
+        <span>Shift Settings</span>
+        <Settings size={20} />
       </button>
-      {/* <ShiftManagerModal
-        open={open}
-        shifts={shifts}
-        onClose={() => setOpen(false)}
-        onCreate={() => {}}
-        onUpdate={() => {}}
-        onDelete={() => {}}
-      /> */}
     </div>
   );
 }

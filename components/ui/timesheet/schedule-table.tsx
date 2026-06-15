@@ -25,10 +25,13 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
   const [days, setDays] = useState<DaySchedule[]>(initialSchedule);
   const [draftDays, setDraftDays] = useState<DaySchedule[]>(initialSchedule);
   const [currentMonth, setCurrentMonth] = useState(5);
-  // const [selectedShift, setSelectedShift] = useState(shifts?.[0]?.id ?? "");
-  const defaultShift = useMemo(() => shifts[0]?.name ?? "", [shifts]);
 
-  const [selectedShift, setSelectedShift] = useState(defaultShift);
+  // const [selectedShift, setSelectedShift] = useState(initialShift);
+
+  const initialShift = shifts[0]?.name ?? "";
+  const [defaultShift, setDefaultShift] = useState(initialShift);
+  const [activeShift, setActiveShift] = useState(initialShift);
+
   const [isSaving, setIsSaving] = useState(false);
 
   const { monthName, offset, prevMonthLastDay } = useCalendarMonth({
@@ -65,14 +68,27 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 px-2 sm:px-4">
-      <ShiftSelector
-        shifts={shifts}
-        selectedShift={selectedShift}
-        setSelectedShift={setSelectedShift}
-      />
+    <div className="mx-auto w-full max-w-5xl space-y-4 px-2 pt-8 sm:px-4">
+      {/* DEFAULT SHIFT CONTROL */}
+
+      <div className="">
+        <h2 className="text-md mb-2 font-semibold">Select a default shift</h2>
+
+        <ShiftSelector
+          shifts={shifts}
+          selectedShift={defaultShift}
+          setSelectedShift={setDefaultShift}
+        />
+      </div>
 
       <ShiftSetting shifts={shifts} />
+
+      {/* ACTIVE SHIFT (FOR OVERRIDES) */}
+      <ShiftSelector
+        shifts={shifts}
+        selectedShift={activeShift}
+        setSelectedShift={setActiveShift}
+      />
 
       <button
         onClick={handleSave}
@@ -93,27 +109,12 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
         offset={offset}
         prevMonthLastDay={prevMonthLastDay}
         monthDays={monthDays}
-        selectedShift={selectedShift}
+        activeShift={activeShift}
+        defaultShift={defaultShift}
       />
 
-      <div>
-        <h2 className="mb-2 text-lg font-semibold">Shift Settings</h2>
-
-        <table className="w-full border text-sm">
-          <tbody>
-            {shifts.map((shift) => (
-              <tr key={shift.id}>
-                <td className={`border p-2 ${shift.color}`}>{shift.name}</td>
-                <td className="border p-2">{shift.startTime}</td>
-                <td className="border p-2">{shift.endTime}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
       <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
-        {JSON.stringify(days, null, 2)}
+        {JSON.stringify(draftDays, null, 2)}
       </pre>
     </div>
   );

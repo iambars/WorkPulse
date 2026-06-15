@@ -11,6 +11,8 @@ type CalendarGridProps = {
   offset: number;
   prevMonthLastDay: number;
   monthDays: DaySchedule[];
+  activeShift: string;
+  defaultShift: string;
 };
 
 export default function CalendarGrid({
@@ -20,78 +22,80 @@ export default function CalendarGrid({
   offset,
   prevMonthLastDay,
   monthDays,
+  activeShift,
+  defaultShift,
 }: CalendarGridProps) {
   const shiftMap = useMemo(
     () => Object.fromEntries(shifts.map((shift) => [shift.name, shift])),
     [shifts],
   );
 
-  const getSafeShift = (shiftId: string | null) => {
-    if (!shiftId) return shiftMap[selectedShift];
-    return shiftMap[shiftId] ?? shiftMap[selectedShift];
+  const getShift = (day: DaySchedule) => {
+    if (!day.workDay) return null;
+    const shiftId = day.shiftId ?? defaultShift;
+    return shiftMap[shiftId];
   };
 
-  const updateDay = (date: string, data: Partial<DaySchedule>) => {
+  const handleDayClick = (day: DaySchedule) => {
     setDays((prev) =>
-      prev.map((day) => (day.date === date ? { ...day, ...data } : day)),
+      prev.map((d) =>
+        d.date === day.date
+          ? {
+              ...d,
+              workDay: !d.workDay,
+              shiftId: !d.workDay ? activeShift : null,
+            }
+          : d,
+      ),
     );
   };
 
   return (
     <>
       {/* WEEK HEADER */}
+
       <div className="mb-4 grid grid-cols-7 gap-2 text-center text-sm font-semibold">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="rounded bg-gray-100 p-2">
-            {day}
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="rounded bg-gray-100 p-2">
+            {d}
           </div>
         ))}
       </div>
 
-      {/* CALENDAR */}
+      {/* CALENDAR GRID */}
+
       <div className="grid grid-cols-7 gap-2">
-        {/* PREVIOUS MONTH */}
-        {Array.from({ length: offset }).map((_, index) => (
+        {/* PREV MONTH */}
+
+        {Array.from({ length: offset }).map((_, i) => (
           <div
-            key={`prev-${index}`}
-            className="bg-secondary/5 text-primary/20 border-secondary/10 min-h-28 rounded-lg border p-2"
+            key={`prev-${i}`}
+            className="min-h-28 rounded-lg border bg-gray-50 p-2 text-gray-300"
           >
-            {prevMonthLastDay - offset + index + 1}
+            {prevMonthLastDay - offset + i + 1}
           </div>
         ))}
 
         {/* CURRENT MONTH */}
-        {monthDays.map((day) => {
-          // const shift = day.shiftId ? shiftMap[day.shiftId] : undefined;
-          const shift = getSafeShift(day.shiftId);
-          const dateObj = new Date(day.date);
 
-          const cardClass = `
-            min-h-28 rounded-lg border p-2 text-left
-            transition hover:scale-[1.01]
-            ${
-              day.workDay
-                ? (shift?.color ?? "bg-gray-100 text-gray-700 border-gray-300")
-                : "bg-gray-100 text-gray-400 border-gray-300"
-            }
-          `;
+        {monthDays.map((day) => {
+          const shift = getShift(day);
+
+          const dateObj = new Date(day.date);
 
           return (
             <button
               key={day.date}
-              // aria-label={`${day.date} ${
-              //   day.workDay ? (shift?.name ?? "Work Day") : "Rest Day"
-              // }`}
-              onClick={() => {
-                const nextWorkDay = !day.workDay;
-
-                updateDay(day.date, {
-                  workDay: nextWorkDay,
-                  shiftId: nextWorkDay ? selectedShift : null,
-                });
-              }}
-              className={cardClass}
+              type="button"
+              onClick={() => handleDayClick(day)}
+              className={`min-h-28 rounded-lg border p-2 text-left transition hover:scale-[1.01] ${
+                day.workDay
+                  ? (shift?.color ?? "bg-gray-100")
+                  : "bg-gray-100 text-gray-400"
+              }`}
             >
+              {/* header */}
+
               <div className="flex justify-between">
                 <span className="font-semibold">{dateObj.getDate()}</span>
 
@@ -100,34 +104,44 @@ export default function CalendarGrid({
                 </span>
               </div>
 
+              {/* shift info */}
+
               <div className="mt-6 text-center text-[10px] font-medium">
-                {day.workDay ? (
+                {!day.workDay ? (
+                  <div className="mt-6 text-center text-[10px] font-medium text-gray-400">
+                    REST DAY
+                  </div>
+                ) : (
                   <>
                     <div>
                       {shift?.startTime ? formatTime12Hr(shift.startTime) : ""}
                     </div>
-
                     <div>
                       {shift?.endTime ? formatTime12Hr(shift.endTime) : ""}
                     </div>
                   </>
-                ) : (
-                  "REST DAY"
                 )}
               </div>
+
+              {/* override indicator */}
+
+              {day.shiftId && day.shiftId !== defaultShift && (
+                <div className="mt-2 text-[10px] text-blue-500">overridden</div>
+              )}
             </button>
           );
         })}
 
         {/* NEXT MONTH */}
+
         {Array.from({
           length: (7 - ((offset + monthDays.length) % 7)) % 7,
-        }).map((_, index) => (
+        }).map((_, i) => (
           <div
-            key={`next-${index}`}
-            className="bg-secondary/5 text-primary/20 border-secondary/10 min-h-28 rounded-lg border p-2"
+            key={`next-${i}`}
+            className="min-h-28 rounded-lg border bg-gray-50 p-2 text-gray-300"
           >
-            {index + 1}
+            {i + 1}
           </div>
         ))}
       </div>
