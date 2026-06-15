@@ -13,9 +13,10 @@ type Shift = {
 
 type ShiftSettingProps = {
   shifts: Shift[];
+  open: boolean;
 };
 
-export default function ShiftSetting({ shifts }: ShiftSettingProps) {
+export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
   const [localShifts, setLocalShifts] = useState<Shift[]>([]);
 
   useEffect(() => {
@@ -56,8 +57,10 @@ export default function ShiftSetting({ shifts }: ShiftSettingProps) {
     }
   };
 
+  if (!open) return null;
+
   return (
-    <div className="space-y-4">
+    <div className="flex w-full flex-col gap-4 rounded-3xl bg-white p-6 shadow">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Shift Settings</h2>
@@ -82,14 +85,14 @@ export default function ShiftSetting({ shifts }: ShiftSettingProps) {
           </button>
         </div>
       ) : (
-        <table className="w-full border text-sm">
-          <thead className="bg-gray-100">
+        <table className="w-full text-sm">
+          <thead className="">
             <tr>
-              <th className="border p-2 text-left">Name</th>
-              <th className="border p-2 text-left">Start</th>
-              <th className="border p-2 text-left">End</th>
-              <th className="border p-2 text-left">Color</th>
-              <th className="border p-2 text-left">Actions</th>
+              <th className="p-2 text-left">Name</th>
+              <th className="p-2 text-left">Start</th>
+              <th className="p-2 text-left">End</th>
+              <th className="p-2 text-left">Color</th>
+              <th className="p-2 text-left">Actions</th>
             </tr>
           </thead>
 
@@ -167,7 +170,7 @@ export default function ShiftSetting({ shifts }: ShiftSettingProps) {
         <div className="flex justify-end">
           <button
             onClick={handleSave}
-            className="rounded border px-4 py-2 text-sm font-medium hover:bg-gray-50"
+            className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-gray-50"
           >
             Save Changes
           </button>

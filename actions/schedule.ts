@@ -38,4 +38,27 @@ export async function saveSchedule(days: DaySchedule[]) {
   //     shiftId: day.shiftId,
   //   })),
   // });
+
+  await prisma.$transaction(
+    normalizedDays.map((day) =>
+      prisma.scheduleDay.upsert({
+        where: {
+          employeeId_date: {
+            employeeId,
+            date: new Date(day.date),
+          },
+        },
+        update: {
+          workDay: day.workDay,
+          shiftId: day.shiftId,
+        },
+        create: {
+          employeeId,
+          date: new Date(day.date),
+          workDay: day.workDay,
+          shiftId: day.shiftId,
+        },
+      }),
+    ),
+  );
 }

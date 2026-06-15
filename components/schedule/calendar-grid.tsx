@@ -6,18 +6,16 @@ import { useMemo } from "react";
 
 type CalendarGridProps = {
   shifts: Shift[];
-  selectedShift: string;
   setDays: React.Dispatch<React.SetStateAction<DaySchedule[]>>;
   offset: number;
   prevMonthLastDay: number;
   monthDays: DaySchedule[];
-  activeShift: string;
-  defaultShift: string;
+  activeShift: string | null;
+  defaultShift: string | null;
 };
 
 export default function CalendarGrid({
   shifts,
-  selectedShift,
   setDays,
   offset,
   prevMonthLastDay,
@@ -25,35 +23,45 @@ export default function CalendarGrid({
   activeShift,
   defaultShift,
 }: CalendarGridProps) {
-  const shiftMap = useMemo(
-    () => Object.fromEntries(shifts.map((shift) => [shift.name, shift])),
-    [shifts],
-  );
+  // const shiftMap = useMemo(
+  //   () => Object.fromEntries(shifts.map((shift) => [shift.id, shift])),
+  //   [shifts],
+  // );
 
   const getShift = (day: DaySchedule) => {
     if (!day.workDay) return null;
+
     const shiftId = day.shiftId ?? defaultShift;
-    return shiftMap[shiftId];
+    return shifts.find((s) => s.id === shiftId);
   };
 
   const handleDayClick = (day: DaySchedule) => {
     setDays((prev) =>
-      prev.map((d) =>
-        d.date === day.date
-          ? {
-              ...d,
-              workDay: !d.workDay,
-              shiftId: !d.workDay ? activeShift : null,
-            }
-          : d,
-      ),
+      prev.map((d) => {
+        if (d.date !== day.date) return d;
+
+        // toggle rest day
+        if (d.workDay) {
+          return {
+            ...d,
+            workDay: false,
+            shiftId: null,
+          };
+        }
+
+        // activate work day with selected shift
+        return {
+          ...d,
+          workDay: true,
+          shiftId: activeShift,
+        };
+      }),
     );
   };
 
   return (
     <>
       {/* WEEK HEADER */}
-
       <div className="mb-4 grid grid-cols-7 gap-2 text-center text-sm font-semibold">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
           <div key={d} className="rounded bg-gray-100 p-2">
@@ -63,10 +71,8 @@ export default function CalendarGrid({
       </div>
 
       {/* CALENDAR GRID */}
-
       <div className="grid grid-cols-7 gap-2">
         {/* PREV MONTH */}
-
         {Array.from({ length: offset }).map((_, i) => (
           <div
             key={`prev-${i}`}
@@ -77,10 +83,8 @@ export default function CalendarGrid({
         ))}
 
         {/* CURRENT MONTH */}
-
         {monthDays.map((day) => {
           const shift = getShift(day);
-
           const dateObj = new Date(day.date);
 
           return (
@@ -95,7 +99,6 @@ export default function CalendarGrid({
               }`}
             >
               {/* header */}
-
               <div className="flex justify-between">
                 <span className="font-semibold">{dateObj.getDate()}</span>
 
@@ -105,12 +108,11 @@ export default function CalendarGrid({
               </div>
 
               {/* shift info */}
-
               <div className="mt-6 text-center text-[10px] font-medium">
                 {!day.workDay ? (
-                  <div className="mt-6 text-center text-[10px] font-medium text-gray-400">
+                  <span className="mt-6 text-center text-[10px] font-medium text-gray-400">
                     REST DAY
-                  </div>
+                  </span>
                 ) : (
                   <>
                     <div>
@@ -124,7 +126,6 @@ export default function CalendarGrid({
               </div>
 
               {/* override indicator */}
-
               {day.shiftId && day.shiftId !== defaultShift && (
                 <div className="mt-2 text-[10px] text-blue-500">overridden</div>
               )}
@@ -132,8 +133,7 @@ export default function CalendarGrid({
           );
         })}
 
-        {/* NEXT MONTH */}
-
+        {/* NEXT MONTH (filler) */}
         {Array.from({
           length: (7 - ((offset + monthDays.length) % 7)) % 7,
         }).map((_, i) => (

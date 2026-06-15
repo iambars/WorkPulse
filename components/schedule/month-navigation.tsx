@@ -9,6 +9,8 @@ type MonthNavigationProps = {
 export default function MonthNavigation({
   monthName,
   setCurrentMonth,
+  open,
+  setOpen,
 }: MonthNavigationProps) {
   return (
     <div className="flex items-center justify-between">

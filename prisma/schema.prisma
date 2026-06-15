@@ -87,7 +87,7 @@ model ScheduleDay {
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   shift    Shift?   @relation(fields: [shiftId], references: [id])
 
-  @@unique([employeeId, date])
+  @@unique([employeeId, date], name: "employeeId_date")
   @@index([employeeId, date])
 }
 

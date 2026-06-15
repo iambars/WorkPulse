@@ -1,17 +1,39 @@
 import { DaySchedule, Shift } from "@/types/schedule";
 
-export const createYearSchedule = (year: number): DaySchedule[] => {
+// check for the existing daySchedule[] in the database
+// get the first item
+// if there's none, return {date, workDay: false, shiftId: null}
+export const createYearSchedule = (
+  year: number,
+  existing: DaySchedule[] = [],
+): DaySchedule[] => {
+  const existingMap = new Map(
+    existing.map((d) => [
+      d.date,
+      {
+        date: d.date,
+        workDay: d.workDay ?? true,
+        shiftId: d.shiftId ?? null,
+      },
+    ]),
+  );
+
   const result: DaySchedule[] = [];
   for (
     let date = new Date(year, 0, 1);
     date <= new Date(year, 11, 31);
     date.setDate(date.getDate() + 1)
   ) {
-    result.push({
-      date: new Date(date).toISOString().split("T")[0],
-      workDay: true,
-      shift: "Shift 1",
-    });
+    const isoDate = new Date(date).toISOString().split("T")[0];
+    const existingDay = existingMap.get(isoDate);
+
+    result.push(
+      existingDay ?? {
+        date: isoDate,
+        workDay: true,
+        shiftId: null,
+      },
+    );
   }
 
   return result;

@@ -8,7 +8,7 @@ export default function NavBar() {
   const pathname = usePathname();
 
   return (
-    <div className="border-secondary/20 bg-background sticky top-0 flex w-full border-b pt-6 text-sm font-medium md:pt-8">
+    <div className="border-secondary/20 bg-background sticky top-0 z-10 flex w-full border-b pt-6 text-sm font-medium md:pt-8">
       {tabs.map((tab) => {
         const href = `/dashboard/timesheet/${tab.toLowerCase()}`;
 

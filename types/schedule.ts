@@ -5,7 +5,7 @@ export type DaySchedule = {
 };
 
 export type Shift = {
-  id?: string;
+  id: string;
   name: string;
   startTime: string;
   endTime: string;
