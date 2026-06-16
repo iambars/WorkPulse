@@ -41,7 +41,7 @@ export async function saveShifts(shifts: ShiftInput[] = []) {
 
     const employeeId = employee.id;
 
-    // Client side duplicate check
+    // Duplicate name check
     const nameSet = new Set<string>();
     for (const shift of shifts) {
       const key = shift.name.trim().toLowerCase();
@@ -58,82 +58,69 @@ export async function saveShifts(shifts: ShiftInput[] = []) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Get existing shifts
-      const existing = await tx.shift.findMany({
-        where: { employeeId },
-        select: { id: true },
-      });
+      const saved = [];
 
-      const existingIds = new Set(existing.map((s) => s.id));
-      const incomingIds = new Set(
-        shifts.filter((s) => s.id).map((s) => s.id as string),
-      );
-
-      // 2. check if the shift to be deleted is in use
-      const usedShifts = await tx.scheduleDay.findMany({
-        where: {
-          employeeId,
-          shiftId: { not: null },
-        },
-        select: {
-          shiftId: true,
-        },
-      });
-
-      const usedSet = new Set(
-        usedShifts.map((shift) => shift.shiftId).filter(Boolean),
-      );
-      const toDelete = existing.filter((s) => !incomingIds.has(s.id));
-      const blocked = toDelete.find((s) => usedSet.has(s.id));
-
-      if (blocked) {
-        throw new Error(
-          "Cannot delete this shift because it is in used in schedule",
-        );
-      }
-
-      // 3. DELETE removed shifts
-      await tx.shift.deleteMany({
-        where: {
-          employeeId,
-          id: {
-            notIn: [...incomingIds],
-          },
-        },
-      });
-
-      // 4. Update or create
       for (const shift of shifts) {
-        if (shift.id) {
-          await tx.shift.update({
-            where: {
-              id: shift.id,
-            },
+        const existing = await tx.shift.findUnique({
+          where: { id: shift.id },
+        });
 
-            data: {
-              name: shift.name,
-              startTime: shift.startTime,
-              endTime: shift.endTime,
-              color: shift.color,
-            },
-          });
+        if (existing) {
+          // update existing shift
+          saved.push(
+            await tx.shift.update({
+              where: { id: shift.id },
+              data: {
+                name: shift.name,
+                startTime: shift.startTime,
+                endTime: shift.endTime,
+                color: shift.color,
+              },
+            }),
+          );
         } else {
-          await tx.shift.create({
-            data: {
-              employeeId,
-              name: shift.name,
-              startTime: shift.startTime,
-              endTime: shift.endTime,
-              color: shift.color,
-            },
-          });
+          saved.push(
+            await tx.shift.create({
+              data: {
+                id: shift.id, // IMPORTANT: persist client UUID
+                employeeId,
+                name: shift.name,
+                startTime: shift.startTime,
+                endTime: shift.endTime,
+                color: shift.color,
+              },
+            }),
+          );
         }
       }
 
-      return tx.shift.findMany({
-        where: { employeeId },
-        orderBy: { createdAt: "asc" },
-      });
+      return saved;
+
+      // await Promise.all(
+      //   shifts.map((shift) => {
+      //     if (shift.id) {
+      //       return tx.shift.update({
+      //         where: { id: shift.id },
+      //         data: {
+      //           name: shift.name,
+      //           startTime: shift.startTime,
+      //           endTime: shift.endTime,
+      //           color: shift.color,
+      //         },
+      //       });
+      //     }
+
+      //     return tx.shift.create({
+      //       data: {
+      //         employeeId,
+      //         name: shift.name,
+      //         startTime: shift.startTime,
+      //         endTime: shift.endTime,
+      //         color: shift.color,
+      //       },
+      //     });
+      //   }),
+      // );
     });
     return { ok: true, data: result };
   } catch (error) {

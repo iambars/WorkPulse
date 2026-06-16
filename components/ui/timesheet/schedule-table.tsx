@@ -12,6 +12,7 @@ import {
 import { useCalendarMonth, getMonthDays } from "@/hooks/useCalendarMonth";
 import { createYearSchedule } from "@/lib/schedule";
 import { DaySchedule, Schedule, Shift } from "@/types/schedule";
+import { useRouter } from "next/navigation";
 
 type Props = {
   shifts: Shift[];
@@ -20,6 +21,7 @@ type Props = {
 
 export default function ScheduleClient({ shifts, initialSchedules }: Props) {
   const year = 2026;
+  const router = useRouter();
   const firstShiftId = shifts[0]?.id ?? null;
   const [shiftsState, setShiftsState] = useState<Shift[]>(shifts);
 
@@ -60,6 +62,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
         })),
       );
       alert("Schedule saved successfully");
+      router.refresh();
     } catch (error) {
       console.error(error);
       alert("Failed to save schedule");
@@ -67,6 +70,16 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
       setIsSaving(false);
     }
   };
+
+  const usedShiftIds = useMemo(
+    () =>
+      new Set(
+        draftDays
+          .filter((day) => day.workDay && day.shiftId)
+          .map((day) => day.shiftId),
+      ),
+    [draftDays],
+  );
 
   // console.log("shifts: ", shifts);
   // console.log("defaultShift: ", defaultShift);
@@ -96,6 +109,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
           shifts={shiftsState}
           open={open}
           setShifts={setShiftsState}
+          usedShiftIds={usedShiftIds}
         />
       </div>
 

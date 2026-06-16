@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { SHIFT_COLORS } from "@/constants/shifts";
 import { saveShifts } from "@/actions/shift";
-
 import { useRouter } from "next/navigation";
-import { deleteShiftAction } from "@/actions/delete-shift";
 
 type Shift = {
   id: string;
@@ -19,7 +17,7 @@ type ShiftSettingProps = {
   shifts: Shift[];
   open: boolean;
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
-  usedShiftIds: Set<string | null>;
+  usedShiftIds: Set<string>;
 };
 
 export default function ShiftSetting({
@@ -29,29 +27,26 @@ export default function ShiftSetting({
   usedShiftIds,
 }: ShiftSettingProps) {
   const router = useRouter();
-  const initialShiftsRef = useRef<Shift[]>([]);
 
-  // Take snapshot of the original shifts
+  // Initialize only at the start thus []
   useEffect(() => {
-    const initialCopy = structuredClone(shifts ?? []);
-
-    setShifts(initialCopy);
-    initialShiftsRef.current = initialCopy;
+    setShifts(shifts ?? []);
   }, []);
 
-  // Check if there's any changes with the shifts[]
-  const hasChanges =
-    JSON.stringify(shifts) !== JSON.stringify(initialShiftsRef.current);
-
   const updateShift = (
-    identifier: string,
+    identifier: string | number,
     field: keyof Shift,
     value: string,
   ) => {
     setShifts((prev) =>
-      prev.map((shift) =>
-        shift.id === identifier ? { ...shift, [field]: value } : shift,
-      ),
+      prev.map((shift, i) => {
+        const match =
+          typeof identifier === "string"
+            ? shift.id === identifier
+            : i === identifier;
+
+        return match ? { ...shift, [field]: value } : shift;
+      }),
     );
   };
 
@@ -59,7 +54,7 @@ export default function ShiftSetting({
     setShifts((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(), // temporary client ID
+        id: shifts?.id,
         name: "New Shift",
         startTime: "08:00",
         endTime: "17:00",
@@ -68,15 +63,14 @@ export default function ShiftSetting({
     ]);
   };
 
-  const deleteShift = async (identifier: string) => {
-    const res = await deleteShiftAction(identifier);
-    if (!res.ok) {
-      alert(res?.message || "Failed to delet the shift");
-      return;
-    }
-    alert("Shift successfully deleted");
-    setShifts((prev) => prev.filter((shift) => shift.id !== identifier));
-    router.refresh();
+  const deleteShift = (identifier: string | number) => {
+    setShifts((prev) =>
+      prev.filter((shift, i) => {
+        return typeof identifier === "string"
+          ? shift.id !== identifier
+          : i !== identifier;
+      }),
+    );
   };
 
   const handleSave = async () => {
@@ -87,7 +81,6 @@ export default function ShiftSetting({
         alert(result.message);
         return;
       }
-
       alert("Shifts saved successfully");
       router.refresh();
     } catch (error) {
@@ -97,7 +90,6 @@ export default function ShiftSetting({
   };
 
   if (!open) return null;
-  console.log("shifts: ", shifts);
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-3xl bg-white p-6 shadow">
@@ -107,7 +99,7 @@ export default function ShiftSetting({
 
         <button
           onClick={addShift}
-          className="border-secondary/50 rounded-2xl border px-3 py-1 text-sm transition duration-300 hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
+          className="border-secondary/50 text-secondary tansition rounded-2xl border px-3 py-1 text-sm duration-300 hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
         >
           + Add Shift
         </button>
@@ -119,14 +111,14 @@ export default function ShiftSetting({
           <p className="mb-3">No shifts yet</p>
           <button
             onClick={addShift}
-            className="border-secondary/20 hover:border-secondary/80 hover:text-primary rounded-xl border px-4 py-2 text-sm transition duration-500 hover:scale-105"
+            className="border-secondary/20 hover:border-secondary/80 hover:text-primary rounded-xl border px-4 py-2 text-sm transition duration-500 ease-in-out hover:scale-105"
           >
             Create your first shift
           </button>
         </div>
       ) : (
         <table className="w-full text-sm">
-          <thead>
+          <thead className="">
             <tr>
               <th className="p-2 text-left">Name</th>
               <th className="p-2 text-left">Start</th>
@@ -137,11 +129,11 @@ export default function ShiftSetting({
           </thead>
 
           <tbody>
-            {shifts.map((shift) => {
-              const isUsed = shift.id ? usedShiftIds.has(shift.id) : false;
+            {shifts.map((shift, index) => {
+              const isUsed = usedShiftIds.has(shift.id);
 
               return (
-                <tr key={shift.id}>
+                <tr key={shift.id ?? index}>
                   {/* Name */}
                   <td className="border p-2">
                     <input
@@ -159,7 +151,11 @@ export default function ShiftSetting({
                       type="time"
                       value={shift.startTime}
                       onChange={(e) =>
-                        updateShift(shift.id, "startTime", e.target.value)
+                        updateShift(
+                          shift.id ?? index,
+                          "startTime",
+                          e.target.value,
+                        )
                       }
                       className="rounded border px-2 py-1"
                     />
@@ -171,7 +167,11 @@ export default function ShiftSetting({
                       type="time"
                       value={shift.endTime}
                       onChange={(e) =>
-                        updateShift(shift.id, "endTime", e.target.value)
+                        updateShift(
+                          shift.id ?? index,
+                          "endTime",
+                          e.target.value,
+                        )
                       }
                       className="rounded border px-2 py-1"
                     />
@@ -185,7 +185,7 @@ export default function ShiftSetting({
                           key={color.value}
                           type="button"
                           onClick={() =>
-                            updateShift(shift.id, "color", color.value)
+                            updateShift(shift.id ?? index, "color", color.value)
                           }
                           className={`h-6 w-6 rounded-full border ${color.preview} ${
                             shift.color === color.value
@@ -200,7 +200,7 @@ export default function ShiftSetting({
                   {/* Actions */}
                   <td className="border p-2">
                     <button
-                      onClick={() => deleteShift(shift.id)}
+                      onClick={() => deleteShift(shift.id ?? index)}
                       disabled={shifts.length <= 1 || isUsed}
                       className={`${
                         shifts.length <= 1 || isUsed
@@ -219,13 +219,11 @@ export default function ShiftSetting({
       )}
 
       {/* Save */}
+
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          disabled={!hasChanges}
-          className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-            hasChanges ? "hover:bg-gray-50" : "cursor-not-allowed opacity-50"
-          } `}
+          className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-gray-50"
         >
           Save Changes
         </button>
