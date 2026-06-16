@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { saveSchedule } from "@/actions/schedule";
 import {
   ShiftSelector,
@@ -22,6 +22,9 @@ type Props = {
 export default function ScheduleClient({ shifts, initialSchedules }: Props) {
   const year = 2026;
   const router = useRouter();
+  const initialScheduleRef = useRef<DaySchedule[]>(
+    structuredClone(createYearSchedule(year, initialSchedules)),
+  );
   const firstShiftId = shifts[0]?.id ?? null;
   const [shiftsState, setShiftsState] = useState<Shift[]>(shifts);
 
@@ -47,7 +50,11 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
     [draftDays, currentMonth, year],
   );
 
-  const hasChanges = JSON.stringify(monthDays) !== JSON.stringify(draftDays);
+  const hasChanges = useMemo(() => {
+    return (
+      JSON.stringify(draftDays) !== JSON.stringify(initialScheduleRef.current)
+    );
+  }, [draftDays]);
 
   // Save the current month shifts
   const handleSave = async () => {
@@ -61,6 +68,8 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
           shiftId: day.workDay ? (day.shiftId ?? defaultShift) : null,
         })),
       );
+
+      initialScheduleRef.current = structuredClone(draftDays);
       alert("Schedule saved successfully");
       router.refresh();
     } catch (error) {
@@ -101,7 +110,9 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
       )}
 
       {/* Open or hide Shift Setting */}
-      <ShiftSettingButton open={open} setOpen={setOpen} />
+      <div className="flex w-full justify-end">
+        <ShiftSettingButton open={open} setOpen={setOpen} />
+      </div>
 
       {/* Shift Setting */}
       <div className="relative w-full">
@@ -132,7 +143,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
         <button
           onClick={handleSave}
           disabled={isSaving || !hasChanges}
-          className="rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800 hover:bg-blue-600 hover:text-white"
+          className={`rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800 hover:bg-blue-600 hover:text-white ${hasChanges ? "hover:bg-gray-50" : "cursor-not-allowed opacity-50"}`}
         >
           {isSaving ? "Saving..." : "Save Schedule"}
         </button>

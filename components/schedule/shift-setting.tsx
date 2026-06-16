@@ -97,7 +97,6 @@ export default function ShiftSetting({
   };
 
   if (!open) return null;
-  console.log("shifts: ", shifts);
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-3xl bg-white p-6 shadow">
