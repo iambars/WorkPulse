@@ -11,30 +11,25 @@ import {
 } from "@/components/schedule";
 import { useCalendarMonth, getMonthDays } from "@/hooks/useCalendarMonth";
 import { createYearSchedule } from "@/lib/schedule";
-import { DaySchedule, Shift } from "@/types/schedule";
+import { DaySchedule, Schedule, Shift } from "@/types/schedule";
 
 type Props = {
   shifts: Shift[];
-  employeeId: string;
+  initialSchedules: Schedule[];
 };
 
-export default function ScheduleClient({ shifts, employeeId }: Props) {
+export default function ScheduleClient({ shifts, initialSchedules }: Props) {
   const year = 2026;
-
   const firstShiftId = shifts[0]?.id ?? null;
+  const [shiftsState, setShiftsState] = useState<Shift[]>(shifts);
 
   const [draftDays, setDraftDays] = useState<DaySchedule[]>(() =>
-    createYearSchedule(year),
+    createYearSchedule(year, initialSchedules),
   );
-
-  // const [savedDays, setSavedDays] = useState<DaySchedule[]>(() =>
-  //   createYearSchedule(year),
-  // );
 
   const [currentMonth, setCurrentMonth] = useState(5);
 
   const [defaultShift, setDefaultShift] = useState<string | null>(firstShiftId);
-
   const [activeShift, setActiveShift] = useState<string | null>(firstShiftId);
 
   const [open, setOpen] = useState(true);
@@ -50,12 +45,9 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
     [draftDays, currentMonth, year],
   );
 
-  // const hasChanges = JSON.stringify(savedDays) !== JSON.stringify(draftDays);
+  const hasChanges = JSON.stringify(monthDays) !== JSON.stringify(draftDays);
 
-  const handleDefaultShiftChange = (shiftId: string | null) => {
-    setDefaultShift(shiftId);
-  };
-
+  // Save the current month shifts
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -64,13 +56,10 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
         monthDays.map((day) => ({
           date: day.date,
           workDay: day.workDay,
-
-          // resolve effective shift here
           shiftId: day.workDay ? (day.shiftId ?? defaultShift) : null,
         })),
       );
-
-      // setSavedDays(structuredClone(draftDays));
+      alert("Schedule saved successfully");
     } catch (error) {
       console.error(error);
       alert("Failed to save schedule");
@@ -79,46 +68,56 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
     }
   };
 
+  console.log("shifts: ", shifts);
+  // console.log("defaultShift: ", defaultShift);
+  // console.log("initialSchedules: ", initialSchedules);
+
   return (
     <div className="relative mx-auto w-full max-w-5xl space-y-4 px-2 pt-8 sm:px-4">
-      {/* DEFAULT SHIFT */}
+      {/* DEFAULT SHIFT CONTROL */}
+      {shiftsState.length !== 0 && (
+        <div className="">
+          <h2 className="text-md mb-2 font-semibold">Select a default shift</h2>
+          <ShiftSelector
+            shifts={shiftsState}
+            selectedShift={defaultShift}
+            setSelectedShift={setDefaultShift}
+            // setSelectedShift={handleDefaultShiftChange}
+          />
+        </div>
+      )}
 
-      <div>
-        <h2 className="text-md mb-2 font-semibold">Select a default shift</h2>
-
-        <ShiftSelector
-          shifts={shifts}
-          selectedShift={defaultShift}
-          setSelectedShift={handleDefaultShiftChange}
-        />
-      </div>
-
+      {/* Open or hide Shift Setting */}
       <ShiftSettingButton open={open} setOpen={setOpen} />
 
+      {/* Shift Setting */}
       <div className="relative w-full">
-        <ShiftSetting shifts={shifts} open={open} />
-      </div>
-
-      {/* OVERRIDE SHIFT */}
-
-      <div className="p-4">
-        <h2 className="text-md mb-4 font-semibold">
-          Select shift to override the default shift individually
-        </h2>
-
-        <ShiftSelector
-          shifts={shifts}
-          selectedShift={activeShift}
-          setSelectedShift={setActiveShift}
+        <ShiftSetting
+          shifts={shiftsState}
+          open={open}
+          setShifts={setShiftsState}
         />
       </div>
 
-      {/* SAVE */}
+      {/* ACTIVE SHIFT (For overiding the default shift) */}
+      {shiftsState.length !== 0 && (
+        <div className="p-4">
+          <h2 className="text-md mb-4 font-semibold">
+            Select shift to overide the default shift individually
+          </h2>
+          <ShiftSelector
+            shifts={shiftsState}
+            selectedShift={activeShift}
+            setSelectedShift={setActiveShift}
+          />
+        </div>
+      )}
 
-      <div className="flex justify-end">
+      {/* Save Schedule to the database */}
+      <div className="flex w-full justify-end">
         <button
           onClick={handleSave}
-          // disabled={!hasChanges || isSaving}
+          disabled={isSaving || !hasChanges}
           className="rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800 hover:bg-blue-600 hover:text-white"
         >
           {isSaving ? "Saving..." : "Save Schedule"}
@@ -130,10 +129,9 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
         setCurrentMonth={setCurrentMonth}
       />
 
-      {/* CALENDAR */}
-
+      {/* Calendar */}
       <CalendarGrid
-        shifts={shifts}
+        shifts={shiftsState}
         setDays={setDraftDays}
         offset={offset}
         prevMonthLastDay={prevMonthLastDay}
@@ -143,24 +141,23 @@ export default function ScheduleClient({ shifts, employeeId }: Props) {
       />
 
       {/* DEBUG */}
-
-      <div className="mt-4 font-semibold">Month Days</div>
-
+      <div className="mt-4 text-sm font-semibold">Month Days</div>
       <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
         {JSON.stringify(
           monthDays.map((day) => ({
             date: day.date,
             workDay: day.workDay,
-
-            // what will actually be saved
-            effectiveShift: day.shiftId ?? defaultShift,
-
-            // override only
+            defaultShift: defaultShift,
             overrideShift: day.shiftId,
           })),
           null,
           2,
         )}
+      </pre>
+
+      <div className="mt-4 text-sm font-semibold">Draft Days (Full Year)</div>
+      <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
+        {JSON.stringify(draftDays, null, 2)}
       </pre>
     </div>
   );

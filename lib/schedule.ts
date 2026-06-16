@@ -1,22 +1,12 @@
-import { DaySchedule, Shift } from "@/types/schedule";
+import { DaySchedule, Schedule } from "@/types/schedule";
 
-// check for the existing daySchedule[] in the database
-// get the first item
-// if there's none, return {date, workDay: false, shiftId: null}
+// Use the existing schedule from the database
+// If none, create a default schedule entry
 export const createYearSchedule = (
   year: number,
-  existing: DaySchedule[] = [],
+  existing: Schedule[] = [],
 ): DaySchedule[] => {
-  const existingMap = new Map(
-    existing.map((d) => [
-      d.date,
-      {
-        date: d.date,
-        workDay: d.workDay ?? true,
-        shiftId: d.shiftId ?? null,
-      },
-    ]),
-  );
+  const existingMap = new Map(existing.map((d) => [d.date, d]));
 
   const result: DaySchedule[] = [];
   for (
@@ -26,6 +16,10 @@ export const createYearSchedule = (
   ) {
     const isoDate = new Date(date).toISOString().split("T")[0];
     const existingDay = existingMap.get(isoDate);
+
+    // console.log("existingMap: ", existingMap);
+    // console.log("date: ", date);
+    // console.log("isoDate: ", isoDate);
 
     result.push(
       existingDay ?? {

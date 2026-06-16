@@ -4,6 +4,14 @@ export type DaySchedule = {
   shiftId: string | null;
 };
 
+export type Schedule = {
+  id: string;
+  employeeId: string;
+  date: string;
+  workDay: boolean;
+  shiftId: string | null;
+};
+
 export type Shift = {
   id: string;
   name: string;

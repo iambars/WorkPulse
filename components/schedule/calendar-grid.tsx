@@ -2,7 +2,6 @@
 
 import { getDayName, formatTime12Hr } from "@/lib/schedule";
 import { DaySchedule, Shift } from "@/types/schedule";
-import { useMemo } from "react";
 
 type CalendarGridProps = {
   shifts: Shift[];

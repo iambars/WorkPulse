@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SHIFT_COLORS } from "@/constants/shifts";
 import { saveShifts } from "@/actions/shift";
+import { useRouter } from "next/navigation";
 
 type Shift = {
+  id?: string;
   name: string;
   startTime: string;
   endTime: string;
@@ -14,25 +16,40 @@ type Shift = {
 type ShiftSettingProps = {
   shifts: Shift[];
   open: boolean;
+  setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
 };
 
-export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
-  const [localShifts, setLocalShifts] = useState<Shift[]>([]);
+export default function ShiftSetting({
+  shifts,
+  open,
+  setShifts,
+}: ShiftSettingProps) {
+  const router = useRouter();
 
+  // Initialize only at the start thus []
   useEffect(() => {
-    setLocalShifts(shifts ?? []);
+    setShifts(shifts ?? []);
   }, [shifts]);
 
-  const updateShift = (index: number, field: keyof Shift, value: string) => {
-    setLocalShifts((prev) =>
-      prev.map((shift, i) =>
-        i === index ? { ...shift, [field]: value } : shift,
-      ),
+  const updateShift = (
+    identifier: string | number,
+    field: keyof Shift,
+    value: string,
+  ) => {
+    setShifts((prev) =>
+      prev.map((shift, i) => {
+        const match =
+          typeof identifier === "string"
+            ? shift.id === identifier
+            : i === identifier;
+
+        return match ? { ...shift, [field]: value } : shift;
+      }),
     );
   };
 
   const addShift = () => {
-    setLocalShifts((prev) => [
+    setShifts((prev) => [
       ...prev,
       {
         name: "New Shift",
@@ -43,14 +60,21 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
     ]);
   };
 
-  const deleteShift = (index: number) => {
-    setLocalShifts((prev) => prev.filter((_, i) => i !== index));
+  const deleteShift = (identifier: string | number) => {
+    setShifts((prev) =>
+      prev.filter((shift, i) => {
+        return typeof identifier === "string"
+          ? shift.id !== identifier
+          : i !== identifier;
+      }),
+    );
   };
 
   const handleSave = async () => {
     try {
-      await saveShifts(localShifts);
+      await saveShifts(shifts);
       alert("Shifts saved successfully");
+      router.refresh();
     } catch (error) {
       console.error(error);
       alert("Failed to save shifts");
@@ -67,19 +91,19 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
 
         <button
           onClick={addShift}
-          className="border-secondary/50 text-secondary rounded-2xl border px-3 py-1 text-sm hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
+          className="border-secondary/50 text-secondary tansition rounded-2xl border px-3 py-1 text-sm duration-300 hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
         >
           + Add Shift
         </button>
       </div>
 
       {/* Empty state */}
-      {localShifts.length === 0 ? (
-        <div className="rounded border p-6 text-center text-gray-500">
+      {shifts.length === 0 ? (
+        <div className="border-secondary/50 rounded-xl border p-6 text-center text-gray-500">
           <p className="mb-3">No shifts yet</p>
           <button
             onClick={addShift}
-            className="rounded border px-4 py-2 text-sm"
+            className="border-secondary/20 hover:border-secondary/80 hover:text-primary rounded-xl border px-4 py-2 text-sm transition duration-500 ease-in-out hover:scale-105"
           >
             Create your first shift
           </button>
@@ -97,13 +121,15 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
           </thead>
 
           <tbody>
-            {localShifts.map((shift, index) => (
-              <tr key={index}>
+            {shifts.map((shift, index) => (
+              <tr key={shift.id ?? index}>
                 {/* Name */}
                 <td className="border p-2">
                   <input
                     value={shift.name}
-                    onChange={(e) => updateShift(index, "name", e.target.value)}
+                    onChange={(e) =>
+                      updateShift(shift.id ?? index, "name", e.target.value)
+                    }
                     className={`w-full rounded border px-2 py-1 ${shift.color}`}
                   />
                 </td>
@@ -114,7 +140,11 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
                     type="time"
                     value={shift.startTime}
                     onChange={(e) =>
-                      updateShift(index, "startTime", e.target.value)
+                      updateShift(
+                        shift.id ?? index,
+                        "startTime",
+                        e.target.value,
+                      )
                     }
                     className="rounded border px-2 py-1"
                   />
@@ -126,7 +156,7 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
                     type="time"
                     value={shift.endTime}
                     onChange={(e) =>
-                      updateShift(index, "endTime", e.target.value)
+                      updateShift(shift.id ?? index, "endTime", e.target.value)
                     }
                     className="rounded border px-2 py-1"
                   />
@@ -139,7 +169,9 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
                       <button
                         key={color.value}
                         type="button"
-                        onClick={() => updateShift(index, "color", color.value)}
+                        onClick={() =>
+                          updateShift(shift.id ?? index, "color", color.value)
+                        }
                         className={`h-6 w-6 rounded-full border ${color.preview} ${
                           shift.color === color.value
                             ? "ring-2 ring-black ring-offset-2"
@@ -153,8 +185,9 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
                 {/* Actions */}
                 <td className="border p-2">
                   <button
-                    onClick={() => deleteShift(index)}
-                    className="text-red-500 hover:underline"
+                    onClick={() => deleteShift(shift.id ?? index)}
+                    disabled={shifts.length <= 1}
+                    className={`text-red-500 hover:underline ${shifts.length <= 1 && "hidden"}`}
                   >
                     Delete
                   </button>
@@ -166,16 +199,15 @@ export default function ShiftSetting({ shifts, open }: ShiftSettingProps) {
       )}
 
       {/* Save */}
-      {localShifts.length > 0 && (
-        <div className="flex justify-end">
-          <button
-            onClick={handleSave}
-            className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-gray-50"
-          >
-            Save Changes
-          </button>
-        </div>
-      )}
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-gray-50"
+        >
+          Save Changes
+        </button>
+      </div>
     </div>
   );
 }
