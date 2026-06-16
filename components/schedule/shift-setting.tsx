@@ -72,7 +72,12 @@ export default function ShiftSetting({
 
   const handleSave = async () => {
     try {
-      await saveShifts(shifts);
+      const result = await saveShifts(shifts);
+
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
       alert("Shifts saved successfully");
       router.refresh();
     } catch (error) {

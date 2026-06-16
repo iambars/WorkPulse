@@ -68,7 +68,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
     }
   };
 
-  console.log("shifts: ", shifts);
+  // console.log("shifts: ", shifts);
   // console.log("defaultShift: ", defaultShift);
   // console.log("initialSchedules: ", initialSchedules);
 
