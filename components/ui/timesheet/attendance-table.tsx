@@ -57,7 +57,7 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
 
         // temp values
         timeIn: "09:00",
-        timeOut: "18:00",
+        timeOut: "18:30",
         // timeIn: workDayShift?.startTime,
         // timeOut: workDayShift?.endTime,
         breakHours: 1,
@@ -75,32 +75,40 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
       // year: "numeric",
     });
 
-  const getHours = (inT: string, outT: string, breakH: number) => {
+  const getWorkedHours = (inT: string, outT: string, breakH: number) => {
     const [ih, im] = inT.split(":").map(Number);
     const [oh, om] = outT.split(":").map(Number);
 
     return (oh * 60 + om - (ih * 60 + im)) / 60 - breakH;
   };
 
-  const getOT = (hours: number, isRestDay: boolean) => {
-    if (isRestDay) return hours;
-    const ot = Math.max(0, hours - 8);
+  const getRegularHours = (workedHours: number, isRestDay: boolean) => {
+    if (isRestDay) return null;
+    return Math.min(workedHours, 8);
+  };
 
-    return ot === 0 ? null : ot;
+  const getOT = (workedHours: number, isRestDay: boolean) => {
+    if (isRestDay) return workedHours;
+
+    const ot = workedHours - 8;
+
+    return ot > 0 ? ot : null;
   };
 
   const getStatus = (row: Row, hours: number) => {
     if (row.isRestDay) return "Rest Day";
-    if (!row.scheduledIn || !row.timeIn) return "Unknown";
+    if (!row.scheduledIn || !row.timeIn || hours === null) return "Unknown";
 
     const [sh, sm] = row.scheduledIn.split(":").map(Number);
     const [ih, im] = row.timeIn.split(":").map(Number);
 
-    const lateMinutes = ih * 60 + im - (sh * 60 + sm);
+    const isLate = ih * 60 + im > sh * 60 + sm;
+    const isUndertime = hours < 8;
 
-    if (lateMinutes > 0) return "Late";
-    if (hours >= 8) return "Present";
-    return "Undertime";
+    if (isLate && isUndertime) return "Late & Undertime";
+    if (isLate) return "Late";
+    if (isUndertime) return "Undertime";
+    return "Present";
   };
 
   const getStatusStyle = (status: string) => {
@@ -108,6 +116,7 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
       case "Rest Day":
         return "text-gray-600 bg-gray-100";
       case "Late":
+      case "Late & Undertime":
         return "text-red-600 bg-red-50";
       case "Present":
         return "text-green-700 bg-green-50";
@@ -117,6 +126,31 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
         return "text-gray-600";
     }
   };
+
+  const totals = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => {
+        const workedHours =
+          row.timeIn && row.timeOut
+            ? getWorkedHours(row.timeIn, row.timeOut, row.breakHours)
+            : null;
+
+        const hours =
+          workedHours !== null
+            ? getRegularHours(workedHours, row.isRestDay)
+            : null;
+
+        const ot =
+          workedHours !== null ? getOT(workedHours, row.isRestDay) : null;
+
+        return {
+          hours: acc.hours + (hours ?? 0),
+          ot: acc.ot + (ot ?? 0),
+        };
+      },
+      { hours: 0, ot: 0 },
+    );
+  }, [rows]);
 
   return (
     <div className="flex w-full flex-col gap-8 overflow-x-auto py-8">
@@ -145,10 +179,13 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
 
             const workedHours =
               row.timeIn && row.timeOut
-                ? getHours(row.timeIn, row.timeOut, row.breakHours)
+                ? getWorkedHours(row.timeIn, row.timeOut, row.breakHours)
                 : null;
 
-            const hours = !row.isRestDay ? workedHours : null;
+            const hours =
+              workedHours !== null
+                ? getRegularHours(workedHours, row.isRestDay)
+                : null;
 
             const ot =
               workedHours !== null ? getOT(workedHours, row.isRestDay) : null;
@@ -224,6 +261,20 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
             );
           })}
         </tbody>
+
+        <tfoot className="bg-gray-100 font-semibold">
+          <tr>
+            <td colSpan={6} className="border p-2 text-left">
+              Total
+            </td>
+
+            <td className="border p-2">{totals.hours.toFixed(2)}</td>
+
+            <td className="border p-2">{totals.ot.toFixed(2)}</td>
+
+            <td className="border p-2">-</td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
