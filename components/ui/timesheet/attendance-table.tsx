@@ -1,61 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { MonthNavigation } from "@/components/schedule";
+import { useCalendarMonth } from "@/hooks/useCalendarMonth";
+
+import { Schedule, Shift } from "@/types/schedule";
+import { useMemo, useState } from "react";
 
 type Row = {
   date: string;
-  shift: "SHIFT_1" | "SHIFT_2";
-  scheduledIn: string;
-  scheduledOut: string;
-  timeIn: string;
-  timeOut: string;
+  isRestDay: boolean;
+  shiftName?: string;
+  color?: string;
+  scheduledIn?: string;
+  scheduledOut?: string;
+  timeIn?: string;
+  timeOut?: string;
   breakHours: number;
   remarks?: string;
 };
 
-type Shift = {
-  name: string;
-  color: string;
+type Props = {
+  shifts: Shift[];
+  initialSchedules: Schedule[];
 };
 
-export default function AttendanceTable() {
-  const [shifts] = useState<Shift[]>([
-    { name: "SHIFT_1", color: "bg-blue-100 text-blue-700" },
-    { name: "SHIFT_2", color: "bg-green-100 text-green-700" },
-  ]);
+export default function AttendanceTable({ shifts, initialSchedules }: Props) {
+  console.log("initialSchedules: ", initialSchedules);
 
-  const [rows] = useState<Row[]>([
-    {
-      date: "2026-06-01",
-      shift: "SHIFT_1",
-      scheduledIn: "08:00",
-      scheduledOut: "17:00",
-      timeIn: "08:05",
-      timeOut: "17:30",
-      breakHours: 1,
-      remarks: "",
-    },
-    {
-      date: "2026-06-02",
-      shift: "SHIFT_1",
-      scheduledIn: "08:00",
-      scheduledOut: "17:00",
-      timeIn: "08:00",
-      timeOut: "17:00",
-      breakHours: 1,
-      remarks: "On time",
-    },
-    {
-      date: "2026-06-03",
-      shift: "SHIFT_2",
-      scheduledIn: "09:00",
-      scheduledOut: "18:00",
-      timeIn: "09:10",
-      timeOut: "18:20",
-      breakHours: 1,
-      remarks: "Late login",
-    },
-  ]);
+  const year = 2026;
+  const [currentMonth, setCurrentMonth] = useState(5);
+  const { monthName } = useCalendarMonth({
+    year,
+    month: currentMonth,
+  });
+  // const initialScheduleRef = useRef<DaySchedule[]>(
+  //   structuredClone(createYearSchedule(year, initialSchedules)),
+  // );
+
+  const rows = useMemo(() => {
+    const monthSchedules = initialSchedules.filter((sched) => {
+      const date = new Date(sched.date);
+
+      return date.getFullYear() === year && date.getMonth() === currentMonth;
+    });
+
+    return monthSchedules.map((sched) => {
+      const workDayShift = shifts.find((s) => s.id === sched.shiftId);
+
+      return {
+        date: sched.date,
+        isRestDay: !workDayShift,
+        shiftName: workDayShift?.name,
+        color: workDayShift?.color,
+        scheduledIn: workDayShift?.startTime,
+        scheduledOut: workDayShift?.endTime,
+
+        // temp values
+        timeIn: "09:00",
+        timeOut: "18:00",
+        // timeIn: workDayShift?.startTime,
+        // timeOut: workDayShift?.endTime,
+        breakHours: 1,
+        remarks: "Late login",
+      };
+    });
+  }, [initialSchedules, shifts, currentMonth, year]);
 
   // ---------------- helpers ----------------
 
@@ -63,7 +72,7 @@ export default function AttendanceTable() {
     new Date(dateStr).toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
-      year: "numeric",
+      // year: "numeric",
     });
 
   const getHours = (inT: string, outT: string, breakH: number) => {
@@ -73,9 +82,17 @@ export default function AttendanceTable() {
     return (oh * 60 + om - (ih * 60 + im)) / 60 - breakH;
   };
 
-  const getOT = (hours: number) => Math.max(0, hours - 8);
+  const getOT = (hours: number, isRestDay: boolean) => {
+    if (isRestDay) return hours;
+    const ot = Math.max(0, hours - 8);
+
+    return ot === 0 ? null : ot;
+  };
 
   const getStatus = (row: Row, hours: number) => {
+    if (row.isRestDay) return "Rest Day";
+    if (!row.scheduledIn || !row.timeIn) return "Unknown";
+
     const [sh, sm] = row.scheduledIn.split(":").map(Number);
     const [ih, im] = row.timeIn.split(":").map(Number);
 
@@ -86,12 +103,10 @@ export default function AttendanceTable() {
     return "Undertime";
   };
 
-  const getShiftStyle = (shiftName: string) =>
-    shifts.find((s) => s.name === shiftName)?.color ??
-    "bg-gray-100 text-gray-600";
-
   const getStatusStyle = (status: string) => {
     switch (status) {
+      case "Rest Day":
+        return "text-gray-600 bg-gray-100";
       case "Late":
         return "text-red-600 bg-red-50";
       case "Present":
@@ -104,7 +119,11 @@ export default function AttendanceTable() {
   };
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="flex w-full flex-col gap-8 overflow-x-auto py-8">
+      <MonthNavigation
+        monthName={monthName}
+        setCurrentMonth={setCurrentMonth}
+      />
       <table className="w-full table-fixed border text-sm">
         <thead className="bg-gray-100">
           <tr>
@@ -122,44 +141,77 @@ export default function AttendanceTable() {
 
         <tbody>
           {rows.map((row, i) => {
-            const hours = getHours(row.timeIn, row.timeOut, row.breakHours);
-            const ot = getOT(hours);
-            const status = getStatus(row, hours);
+            if (!row) return;
+
+            const workedHours =
+              row.timeIn && row.timeOut
+                ? getHours(row.timeIn, row.timeOut, row.breakHours)
+                : null;
+
+            const hours = !row.isRestDay ? workedHours : null;
+
+            const ot =
+              workedHours !== null ? getOT(workedHours, row.isRestDay) : null;
+
+            const status = hours !== null ? getStatus(row, hours) : "Rest Day";
 
             return (
-              <tr key={i} className="hover:bg-gray-50">
-                {/* DATE */}
-                <td className="border p-2 font-medium">
+              <tr key={i}>
+                {/* Date */}
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
                   {formatDate(row.date)}
                 </td>
-
                 {/* SHIFT (colored badge) */}
-                <td className="border p-2">
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
                   <span
-                    className={`inline-block rounded px-2 py-1 text-xs ${getShiftStyle(
-                      row.shift,
-                    )}`}
+                    className={`inline-block rounded px-2 py-1 text-xs ${row.color} `}
                   >
-                    {row.shift}
+                    {row.shiftName ?? "-"}
                   </span>
                 </td>
-
                 {/* SCHEDULE */}
-                <td className="border p-2">{row.scheduledIn}</td>
-                <td className="border p-2">{row.scheduledOut}</td>
-
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
+                  {row.scheduledIn ?? "-"}
+                </td>
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
+                  {row.scheduledOut ?? "-"}
+                </td>
                 {/* ACTUAL */}
-                <td className="border p-2">{row.timeIn}</td>
-                <td className="border p-2">{row.timeOut}</td>
-
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
+                  {row.timeIn ?? "-"}
+                </td>
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
+                  {row.timeOut ?? "-"}
+                </td>
                 {/* HOURS */}
-                <td className="border p-2 font-medium">{hours.toFixed(2)}</td>
-
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
+                  {hours?.toFixed(2) ?? "-"}
+                </td>
                 {/* OT */}
-                <td className="border p-2">{ot.toFixed(2)}</td>
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
+                  {ot?.toFixed(2) ?? "-"}
+                </td>
 
                 {/* STATUS (colored badge) */}
-                <td className="border p-2">
+                <td
+                  className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
+                >
                   <span
                     className={`inline-block rounded px-2 py-1 text-xs font-medium ${getStatusStyle(
                       status,

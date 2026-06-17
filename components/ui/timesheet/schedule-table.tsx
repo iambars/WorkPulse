@@ -93,6 +93,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
   // console.log("shifts: ", shifts);
   // console.log("defaultShift: ", defaultShift);
   // console.log("initialSchedules: ", initialSchedules);
+  // console.log("monthDays: ", monthDays);
 
   return (
     <div className="relative mx-auto w-full max-w-5xl space-y-4 px-2 pt-8 sm:px-4">
