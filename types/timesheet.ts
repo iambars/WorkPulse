@@ -1,6 +1,6 @@
 export const tabs = [
-  "Attendance",
   "Schedule",
+  "Attendance",
   "Adjustments",
   "Summary",
   "Preferences",

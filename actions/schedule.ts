@@ -1,43 +1,21 @@
 "use server";
 
-import { auth } from "@/auth";
+import { getDashboardContext } from "@/lib/dashboard/getDashboardContext";
 import prisma from "@/lib/prisma";
-import { DaySchedule, ScheduleDayInput } from "@/types/schedule";
+import { DaySchedule } from "@/types/schedule";
 
 export async function saveSchedule(days: DaySchedule[]) {
-  const session = await auth();
-  // console.log("session: ", session);
+  const ctx = await getDashboardContext();
+  if (!ctx) throw new Error("Unauthorized");
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+  const employeeId = ctx.employeeId;
 
-  const employee = await prisma.employee.findUnique({
-    where: {
-      userId: session.user.id,
-    },
-  });
-
-  if (!employee) {
-    throw new Error("Employee not found");
-  }
-
-  const employeeId = employee.id;
   const normalizedDays = days.map((day) => ({
     ...day,
     shiftId: day.workDay ? day.shiftId : null,
   }));
 
-  console.log("normalizedDays: ", normalizedDays);
-
-  // await prisma.scheduleDay.createMany({
-  //   data: normalizedDays.map((day) => ({
-  //     employeeId,
-  //     date: day.date,
-  //     workDay: day.workDay,
-  //     shiftId: day.shiftId,
-  //   })),
-  // });
+  // console.log("normalizedDays: ", normalizedDays);
 
   await prisma.$transaction(
     normalizedDays.map((day) =>

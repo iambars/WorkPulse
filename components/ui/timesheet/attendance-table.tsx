@@ -1,10 +1,11 @@
 "use client";
 
+import { saveAttendance } from "@/actions/attendance";
 import { MonthNavigation } from "@/components/schedule";
 import { useCalendarMonth } from "@/hooks/useCalendarMonth";
 
 import { Schedule, Shift } from "@/types/schedule";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Row = {
   date: string;
@@ -24,10 +25,11 @@ type Props = {
   initialSchedules: Schedule[];
 };
 
-export default function AttendanceTable({ shifts, initialSchedules }: Props) {
-  console.log("initialSchedules: ", initialSchedules);
+type AttendanceValues = Record<string, { timeIn: string; timeOut: string }>;
 
+export default function AttendanceTable({ shifts, initialSchedules }: Props) {
   const year = 2026;
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [currentMonth, setCurrentMonth] = useState(5);
   const { monthName } = useCalendarMonth({
     year,
@@ -36,6 +38,8 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
   // const initialScheduleRef = useRef<DaySchedule[]>(
   //   structuredClone(createYearSchedule(year, initialSchedules)),
   // );
+
+  const [attendance, setAttendance] = useState<AttendanceValues>({});
 
   const rows = useMemo(() => {
     const monthSchedules = initialSchedules.filter((sched) => {
@@ -54,17 +58,49 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
         color: workDayShift?.color,
         scheduledIn: workDayShift?.startTime,
         scheduledOut: workDayShift?.endTime,
-
-        // temp values
-        timeIn: "09:00",
-        timeOut: "18:30",
-        // timeIn: workDayShift?.startTime,
-        // timeOut: workDayShift?.endTime,
         breakHours: 1,
-        remarks: "Late login",
       };
     });
   }, [initialSchedules, shifts, currentMonth, year]);
+
+  useEffect(() => {
+    const initialAttendance: AttendanceValues = {};
+
+    rows.forEach((row) => {
+      initialAttendance[row.date] = {
+        timeIn: row.scheduledIn ?? "",
+        timeOut: row.scheduledOut ?? "",
+      };
+    });
+    setAttendance(initialAttendance);
+  }, [rows]);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      await saveAttendance({
+        records: rows.map((row) => {
+          const { timeIn, timeOut, hours } = getAttendanceMetrics(row);
+          const status = getStatus(row, timeIn, hours);
+
+          return {
+            date: row.date,
+            timeIn,
+            timeOut,
+            remarks: status,
+          };
+        }),
+      });
+
+      alert("Attendance saved successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save the attendance");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // ---------------- helpers ----------------
 
@@ -95,12 +131,39 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
     return ot > 0 ? ot : null;
   };
 
-  const getStatus = (row: Row, hours: number) => {
+  const getAttendanceTimes = (date: string) => ({
+    timeIn: attendance[date]?.timeIn ?? "",
+    timeOut: attendance[date]?.timeOut ?? "",
+  });
+
+  const getAttendanceMetrics = (row: Row) => {
+    const { timeIn, timeOut } = getAttendanceTimes(row.date);
+
+    const workedHours =
+      timeIn && timeOut
+        ? getWorkedHours(timeIn, timeOut, row.breakHours)
+        : null;
+
+    const hours =
+      workedHours !== null ? getRegularHours(workedHours, row.isRestDay) : null;
+
+    const ot = workedHours !== null ? getOT(workedHours, row.isRestDay) : null;
+
+    return {
+      timeIn,
+      timeOut,
+      workedHours,
+      hours,
+      ot,
+    };
+  };
+
+  const getStatus = (row: Row, timeIn: string, hours: number | null) => {
     if (row.isRestDay) return "Rest Day";
-    if (!row.scheduledIn || !row.timeIn || hours === null) return "Unknown";
+    if (!row.scheduledIn || !timeIn || hours === null) return "Unknown";
 
     const [sh, sm] = row.scheduledIn.split(":").map(Number);
-    const [ih, im] = row.timeIn.split(":").map(Number);
+    const [ih, im] = timeIn.split(":").map(Number);
 
     const isLate = ih * 60 + im > sh * 60 + sm;
     const isUndertime = hours < 8;
@@ -130,18 +193,7 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
   const totals = useMemo(() => {
     return rows.reduce(
       (acc, row) => {
-        const workedHours =
-          row.timeIn && row.timeOut
-            ? getWorkedHours(row.timeIn, row.timeOut, row.breakHours)
-            : null;
-
-        const hours =
-          workedHours !== null
-            ? getRegularHours(workedHours, row.isRestDay)
-            : null;
-
-        const ot =
-          workedHours !== null ? getOT(workedHours, row.isRestDay) : null;
+        const { hours, ot } = getAttendanceMetrics(row);
 
         return {
           hours: acc.hours + (hours ?? 0),
@@ -150,7 +202,21 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
       },
       { hours: 0, ot: 0 },
     );
-  }, [rows]);
+  }, [rows, attendance]);
+
+  const updateAttendance = (
+    date: string,
+    field: "timeIn" | "timeOut",
+    value: string,
+  ) => {
+    setAttendance((prev) => ({
+      ...prev,
+      [date]: {
+        ...prev[date],
+        [field]: value,
+      },
+    }));
+  };
 
   return (
     <div className="flex w-full flex-col gap-8 overflow-x-auto py-8">
@@ -174,26 +240,12 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
         </thead>
 
         <tbody>
-          {rows.map((row, i) => {
-            if (!row) return;
-
-            const workedHours =
-              row.timeIn && row.timeOut
-                ? getWorkedHours(row.timeIn, row.timeOut, row.breakHours)
-                : null;
-
-            const hours =
-              workedHours !== null
-                ? getRegularHours(workedHours, row.isRestDay)
-                : null;
-
-            const ot =
-              workedHours !== null ? getOT(workedHours, row.isRestDay) : null;
-
-            const status = hours !== null ? getStatus(row, hours) : "Rest Day";
+          {rows.map((row) => {
+            const { timeIn, timeOut, hours, ot } = getAttendanceMetrics(row);
+            const status = getStatus(row, timeIn, hours);
 
             return (
-              <tr key={i}>
+              <tr key={row.date}>
                 {/* Date */}
                 <td
                   className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
@@ -225,12 +277,28 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
                 <td
                   className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
                 >
-                  {row.timeIn ?? "-"}
+                  <input
+                    type="time"
+                    value={timeIn}
+                    onChange={(e) =>
+                      updateAttendance(row.date, "timeIn", e.target.value)
+                    }
+                    className="w-full rounded-lg border border-blue-600/50 px-2 py-1"
+                    // disabled={row.isRestDay}
+                  />
                 </td>
                 <td
                   className={`border p-2 ${row.isRestDay && "bg-blue-400/30"}`}
                 >
-                  {row.timeOut ?? "-"}
+                  <input
+                    type="time"
+                    value={timeOut}
+                    onChange={(e) =>
+                      updateAttendance(row.date, "timeOut", e.target.value)
+                    }
+                    className="w-full rounded-lg border border-red-500/50 px-2 py-1"
+                    // disabled={row.isRestDay}
+                  />{" "}
                 </td>
                 {/* HOURS */}
                 <td
@@ -276,6 +344,21 @@ export default function AttendanceTable({ shifts, initialSchedules }: Props) {
           </tr>
         </tfoot>
       </table>
+
+      {/* Save button  */}
+      <div className="flex w-full justify-end">
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className={`rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800 ${
+            isSaving
+              ? "cursor-not-allowed opacity-50"
+              : "hover:bg-blue-600 hover:text-white"
+          }`}
+        >
+          Save
+        </button>
+      </div>
     </div>
   );
 }
