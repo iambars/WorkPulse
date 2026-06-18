@@ -7,6 +7,18 @@ export default async function Attendance() {
   const ctx = await getDashboardContext();
   if (!ctx) redirect("/login");
 
+  const formatDate = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate(),
+    ).padStart(2, "0")}`;
+
+  const formatTime = (date: Date | null) =>
+    date
+      ? `${String(date.getHours()).padStart(2, "0")}:${String(
+          date.getMinutes(),
+        ).padStart(2, "0")}`
+      : null;
+
   // fetch existing schedules in the database based on employeeId
   // convert the date from 'Date' to string
   const schedules = (
@@ -16,14 +28,30 @@ export default async function Attendance() {
     })
   ).map((schedule) => ({
     ...schedule,
-    date:
-      `${schedule.date.getFullYear()}-` +
-      `${String(schedule.date.getMonth() + 1).padStart(2, "0")}-` +
-      `${String(schedule.date.getDate()).padStart(2, "0")}`,
+    date: formatDate(schedule.date),
+  }));
+
+  const attendance = (
+    await prisma.attendance.findMany({
+      where: { employeeId: ctx.employeeId },
+      orderBy: { date: "asc" },
+    })
+  ).map((record) => ({
+    ...record,
+    date: formatDate(record.date),
+    timeIn: formatTime(record.timeIn),
+    timeOut: formatTime(record.timeOut),
+    remarks: record.remarks ?? undefined,
   }));
 
   // console.log("ctx: ", ctx);
   // console.log("schedules: ", schedules);
 
-  return <AttendanceTable shifts={ctx.shifts} initialSchedules={schedules} />;
+  return (
+    <AttendanceTable
+      shifts={ctx.shifts}
+      initialSchedules={schedules}
+      initialAttendance={attendance}
+    />
+  );
 }

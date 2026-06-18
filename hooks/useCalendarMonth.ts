@@ -9,7 +9,7 @@ export function useCalendarMonth({
 }) {
   const monthName = new Date(year, month).toLocaleDateString("en-US", {
     month: "long",
-    year: "numeric",
+    // year: "numeric",
   });
 
   const offset = new Date(year, month, 1).getDay();

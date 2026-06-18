@@ -12,6 +12,13 @@ export type Schedule = {
   shiftId: string | null;
 };
 
+export type AttendanceRecord = {
+  date: string;
+  timeIn: string | null;
+  timeOut: string | null;
+  remarks?: string;
+};
+
 export type Shift = {
   id: string;
   name: string;
