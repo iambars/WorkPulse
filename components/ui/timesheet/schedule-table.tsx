@@ -21,24 +21,24 @@ type Props = {
 
 export default function ScheduleClient({ shifts, initialSchedules }: Props) {
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const router = useRouter();
-  const initialScheduleRef = useRef<DaySchedule[]>(
-    structuredClone(createYearSchedule(year, initialSchedules)),
-  );
   const firstShiftId = shifts[0]?.id ?? null;
-  const [shiftsState, setShiftsState] = useState<Shift[]>(shifts);
-
-  const [draftDays, setDraftDays] = useState<DaySchedule[]>(() =>
-    createYearSchedule(year, initialSchedules),
-  );
-
-  const [defaultShift, setDefaultShift] = useState<string | null>(firstShiftId);
-  const [activeShift, setActiveShift] = useState<string | null>(firstShiftId);
 
   const [open, setOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [year, setYear] = useState(now.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const [defaultShift, setDefaultShift] = useState<string | null>(firstShiftId);
+  const [activeShift, setActiveShift] = useState<string | null>(firstShiftId);
+  const [shiftsState, setShiftsState] = useState<Shift[]>(shifts);
+
+  const createInitialSchedule = (year: number) =>
+    structuredClone(createYearSchedule(year, initialSchedules));
+  const [draftDays, setDraftDays] = useState<DaySchedule[]>(() =>
+    createInitialSchedule(year),
+  );
+  const initialScheduleRef = useRef<DaySchedule[]>(createInitialSchedule(year));
 
   const { monthName, offset, prevMonthLastDay } = useCalendarMonth({
     year,
