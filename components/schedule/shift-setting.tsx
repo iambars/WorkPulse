@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SHIFT_COLORS } from "@/constants/shifts";
 import { saveShifts } from "@/actions/shift";
 
@@ -31,17 +31,14 @@ export default function ShiftSetting({
   const router = useRouter();
   const initialShiftsRef = useRef<Shift[]>([]);
 
-  // Take snapshot of the original shifts
-  useEffect(() => {
-    const initialCopy = structuredClone(shifts ?? []);
-
-    setShifts(initialCopy);
-    initialShiftsRef.current = initialCopy;
-  }, []);
-
   // Check if there's any changes with the shifts[]
   const hasChanges =
     JSON.stringify(shifts) !== JSON.stringify(initialShiftsRef.current);
+
+  // Take snapshot of the original shifts
+  useEffect(() => {
+    initialShiftsRef.current = structuredClone(shifts ?? []);
+  }, []);
 
   const updateShift = (
     identifier: string,
@@ -89,6 +86,7 @@ export default function ShiftSetting({
       }
 
       alert("Shifts saved successfully");
+      initialShiftsRef.current = structuredClone(shifts);
       router.refresh();
     } catch (error) {
       console.error(error);

@@ -11,7 +11,15 @@ export const getWorkedHours = (inT: string, outT: string, breakH: number) => {
   const [ih, im] = inT.split(":").map(Number);
   const [oh, om] = outT.split(":").map(Number);
 
-  return (oh * 60 + om - (ih * 60 + im)) / 60 - breakH;
+  const startMinutes = ih * 60 + im;
+  let endMinutes = oh * 60 + om;
+
+  // For night shifts (Crosses midnight)
+  if (endMinutes < startMinutes) {
+    endMinutes += 24 * 60;
+  }
+
+  return (endMinutes - startMinutes) / 60 - breakH;
 };
 
 export const getRegularHours = (workedHours: number, isRestDay: boolean) => {

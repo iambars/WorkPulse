@@ -10,21 +10,20 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { session } = ctx;
+  // const { session } = ctx;
+  // console.log("session: ", session);
 
   return (
-    <div>
-      <h1>Dashboard Page</h1>
-      <div>{session.user?.name}</div>
-      <div>{session.user?.email}</div>
-      {session.user?.image && (
-        <Image
-          src={session.user.image}
-          width={30}
-          height={30}
-          alt="User image"
-        />
-      )}
+    <div className="my-8 flex h-[40vh] items-center justify-center rounded-2xl bg-gray-50">
+      <div className="space-y-3 text-center">
+        <h1 className="text-xl font-semibold">Dashboard</h1>
+
+        <p className="text-gray-500">
+          This section is under development.
+          <br />
+          Changes will be available soon.
+        </p>
+      </div>
     </div>
   );
 }
