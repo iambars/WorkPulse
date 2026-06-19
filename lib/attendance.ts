@@ -19,7 +19,9 @@ export const getWorkedHours = (inT: string, outT: string, breakH: number) => {
     endMinutes += 24 * 60;
   }
 
-  return (endMinutes - startMinutes) / 60 - breakH;
+  const workedHours = (endMinutes - startMinutes) / 60;
+
+  return Math.max(0, workedHours - breakH);
 };
 
 export const getRegularHours = (workedHours: number, isRestDay: boolean) => {
