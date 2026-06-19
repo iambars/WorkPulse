@@ -88,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
-        session.user.role = token.role as string;
+        // session.user.role = token.role as string;
       }
 
       return session;
@@ -98,7 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // 1. Credentials login (user is already DB user)
       if (user) {
         token.sub = user.id;
-        token.role = user.role;
+        // token.role = user.role;
       }
 
       // 2. Google login (we must map to DB user)
