@@ -58,6 +58,8 @@ export default function CalendarGrid({
     );
   };
 
+  // console.log("monthDays: ", monthDays);
+
   return (
     <>
       {/* WEEK HEADER */}

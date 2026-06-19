@@ -19,7 +19,7 @@ export default function MonthNavigation({
   setYear,
 }: MonthNavigationProps) {
   const [isEditingYear, setIsEditingYear] = useState(false);
-  const [tempYear, setTempYear] = useState(year.toString());
+  const [tempYear, setTempYear] = useState(() => String(year ?? ""));
 
   const saveYear = () => {
     const parsed = parseInt(tempYear);

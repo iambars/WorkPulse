@@ -26,16 +26,17 @@ export default function AttendanceTable({
   initialSchedules,
   initialAttendance,
 }: Props) {
-  const [year, setYear] = useState(2026);
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [currentMonth, setCurrentMonth] = useState(5);
+  const initialAttendanceRef = useRef<AttendanceValues | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceValues>({});
+
   const { monthName } = useCalendarMonth({
     year,
     month: currentMonth,
   });
-  const initialAttendanceRef = useRef<AttendanceValues | null>(null);
-
-  const [attendance, setAttendance] = useState<AttendanceValues>({});
 
   const attendanceMap = useMemo(
     () => new Map(initialAttendance.map((a) => [a.date, a])),

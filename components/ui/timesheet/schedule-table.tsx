@@ -20,7 +20,9 @@ type Props = {
 };
 
 export default function ScheduleClient({ shifts, initialSchedules }: Props) {
-  const year = 2026;
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const router = useRouter();
   const initialScheduleRef = useRef<DaySchedule[]>(
     structuredClone(createYearSchedule(year, initialSchedules)),
@@ -31,8 +33,6 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
   const [draftDays, setDraftDays] = useState<DaySchedule[]>(() =>
     createYearSchedule(year, initialSchedules),
   );
-
-  const [currentMonth, setCurrentMonth] = useState(5);
 
   const [defaultShift, setDefaultShift] = useState<string | null>(firstShiftId);
   const [activeShift, setActiveShift] = useState<string | null>(firstShiftId);
@@ -90,10 +90,28 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
     [draftDays],
   );
 
+  useEffect(() => {
+    const schedule = createYearSchedule(year, initialSchedules);
+
+    setDraftDays(schedule);
+    initialScheduleRef.current = structuredClone(schedule);
+  }, [year, initialSchedules]);
+
   // console.log("shifts: ", shifts);
   // console.log("defaultShift: ", defaultShift);
   // console.log("initialSchedules: ", initialSchedules);
   // console.log("monthDays: ", monthDays);
+  // console.log("selected year:", year);
+  // console.log("years in draftDays:", [
+  //   ...new Set(draftDays.map((d) => new Date(d.date).getFullYear())),
+  // ]);
+  // const schedule = createYearSchedule(year, initialSchedules);
+  // console.log(
+  //   "first date",
+  //   schedule[0]?.date,
+  //   "last date",
+  //   schedule[schedule.length - 1]?.date,
+  // );
 
   return (
     <div className="relative mx-auto w-full max-w-5xl space-y-4 px-2 pt-8 sm:px-4">
@@ -151,7 +169,10 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
       </div>
 
       <MonthNavigation
+        year={year}
+        setYear={setYear}
         monthName={monthName}
+        currentMonth={currentMonth}
         setCurrentMonth={setCurrentMonth}
       />
 

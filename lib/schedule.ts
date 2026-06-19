@@ -14,7 +14,11 @@ export const createYearSchedule = (
     date <= new Date(year, 11, 31);
     date.setDate(date.getDate() + 1)
   ) {
-    const isoDate = new Date(date).toISOString().split("T")[0];
+    const isoDate = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
     const existingDay = existingMap.get(isoDate);
 
     // console.log("existingMap: ", existingMap);
@@ -43,7 +47,12 @@ export const formatTime12Hr = (time: string) => {
   return `${hour}:${minute} ${ampm}`;
 };
 
+const parseDate = (dateStr: string) => {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
 export const getDayName = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString("en-US", {
+  parseDate(dateStr).toLocaleDateString("en-US", {
     weekday: "short",
   });

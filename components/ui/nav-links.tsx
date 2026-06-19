@@ -4,12 +4,11 @@ import { clsx } from "clsx";
 import { ClipboardList, HomeIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import path from "node:path";
 
 const links = [
   { name: "Home", href: "/dashboard", icon: HomeIcon },
   { name: "Time Sheet", href: "/dashboard/timesheet", icon: ClipboardList },
-  { name: "Home2", href: "/dashboard2", icon: HomeIcon },
+  // { name: "Home2", href: "/dashboard2", icon: HomeIcon },
 ];
 
 type Props = { collapsed: boolean };
@@ -21,18 +20,22 @@ export default function NavLinks({ collapsed }: Props) {
     <div className="flex flex-col gap-2 p-2">
       {links.map((link) => {
         const LinkIcon = link.icon;
+        const isActive =
+          pathname === link.href ||
+          pathname.split("/")[2] === link.href.split("/")[2];
+
         return (
           <Link
             key={link.name}
             href={link.href}
             className={clsx(
-              "group relative flex h-12 grow items-center gap-2 rounded-md p-2 text-sm font-medium transition md:flex-none md:p-2 md:px-3",
+              "group relative flex h-12 items-center gap-2 rounded-md p-2 text-sm font-medium transition md:flex-none md:px-3",
+
               collapsed ? "justify-center" : "justify-center md:justify-start",
-              {
-                "bg-secondary/40 text-primary": pathname === link.href,
-                "text-secondary hover:bg-secondary/10 hover:text-primary/80":
-                  pathname !== link.href,
-              },
+
+              isActive
+                ? "bg-secondary/40 text-primary"
+                : "text-secondary hover:bg-secondary/10 hover:text-primary/80",
             )}
           >
             <LinkIcon className="h-4 w-4" />

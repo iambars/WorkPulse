@@ -12,7 +12,7 @@ export function useCalendarMonth({
     // year: "numeric",
   });
 
-  const offset = new Date(year, month, 1).getDay();
+  const offset = new Date(Date.UTC(year, month, 1)).getUTCDay();
 
   const prevMonthLastDay = new Date(year, month, 0).getDate();
 
@@ -23,6 +23,11 @@ export function useCalendarMonth({
   };
 }
 
+const parseDate = (s: string) => {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
 export const getMonthDays = (
   days: DaySchedule[],
   year: number,
@@ -30,6 +35,7 @@ export const getMonthDays = (
 ) => {
   return days.filter((day) => {
     const d = new Date(day.date);
-    return d.getFullYear() === year && d.getMonth() === month;
+
+    return d.getUTCFullYear() === year && d.getUTCMonth() === month;
   });
 };
