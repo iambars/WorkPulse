@@ -57,12 +57,12 @@ export default function MonthNavigation({
     <div className="flex items-center justify-between">
       <button
         onClick={goPrev}
-        className="border-border/10 hover:border-border/50 rounded-lg border px-3 py-2 hover:text-blue-500"
+        className="border-border/10 hover:border-border/50 dark:hover:border-secondary/40 rounded-lg border px-3 py-2 hover:text-blue-500"
       >
         <ChevronLeft />
       </button>
 
-      <h2 className="text-xl font-bold">
+      <h2 className="dark:text-primary/80 text-xl font-bold">
         {monthName}{" "}
         {isEditingYear ? (
           <input
@@ -94,7 +94,7 @@ export default function MonthNavigation({
 
       <button
         onClick={goNext}
-        className="border-border/10 hover:border-border/50 rounded-lg border px-3 py-2 hover:text-blue-500"
+        className="border-border/10 hover:border-border/50 dark:hover:border-secondary/40 rounded-lg border px-3 py-2 hover:text-blue-500"
       >
         <ChevronRight />
       </button>

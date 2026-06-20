@@ -118,7 +118,9 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
       {/* DEFAULT SHIFT CONTROL */}
       {shiftsState.length !== 0 && (
         <div className="">
-          <h2 className="text-md mb-2 font-semibold">Select a default shift</h2>
+          <h2 className="text-md dark:text-secondary/80 mb-2 font-semibold">
+            Select a default shift
+          </h2>
           <ShiftSelector
             shifts={shiftsState}
             selectedShift={defaultShift}
@@ -146,7 +148,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
       {/* ACTIVE SHIFT (For overiding the default shift) */}
       {shiftsState.length !== 0 && (
         <div className="p-4">
-          <h2 className="text-md mb-4 font-semibold">
+          <h2 className="text-md dark:text-secondary/80 mb-4 font-semibold">
             Select shift to overide the default shift individually
           </h2>
           <ShiftSelector
@@ -162,7 +164,7 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
         <button
           onClick={handleSave}
           disabled={isSaving || !hasChanges}
-          className={`hover:text-primary rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800/80 ${hasChanges ? "hover:bg-blue-400/80" : "cursor-not-allowed opacity-50"}`}
+          className={`hover:text-primary dark:text-primary rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800/80 ${hasChanges ? "hover:bg-blue-400/80" : "cursor-not-allowed opacity-50"}`}
         >
           {isSaving ? "Saving..." : "Save Schedule"}
         </button>
@@ -188,8 +190,8 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
       />
 
       {/* DEBUG */}
-      <div className="mt-4 text-sm font-semibold">Month Days</div>
-      <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
+      <div className="mt-16 text-sm font-semibold">Month Days</div>
+      <pre className="text-secondary scrollbar-thumb-secondary/40 dark:scrollbar-thumb-secondary/20 mb-16 max-h-96 scrollbar-thin scrollbar-track-transparent overflow-auto rounded-xl border p-4 text-xs">
         {JSON.stringify(
           monthDays.map((day) => ({
             date: day.date,
@@ -200,11 +202,6 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
           null,
           2,
         )}
-      </pre>
-
-      <div className="mt-4 text-sm font-semibold">Draft Days (Full Year)</div>
-      <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
-        {JSON.stringify(draftDays, null, 2)}
       </pre>
     </div>
   );

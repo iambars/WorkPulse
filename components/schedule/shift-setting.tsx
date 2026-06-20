@@ -97,14 +97,16 @@ export default function ShiftSetting({
   if (!open) return null;
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-3xl bg-white p-6 shadow">
+    <div className="border-secondary/20 flex w-full flex-col gap-4 rounded-3xl border bg-white/80 p-6 shadow dark:bg-transparent">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Shift Settings</h2>
+        <h2 className="text-primary/90 dark:text-secondary/80 text-lg font-semibold">
+          Shift Settings
+        </h2>
 
         <button
           onClick={addShift}
-          className="border-secondary/50 rounded-2xl border px-3 py-1 text-sm transition duration-300 hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
+          className="border-secondary/50 dark:text-secondary/80 rounded-2xl border px-3 py-1 text-sm transition duration-300 hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700 hover:shadow"
         >
           + Add Shift
         </button>
@@ -136,46 +138,47 @@ export default function ShiftSetting({
           <tbody>
             {shifts.map((shift) => {
               const isUsed = shift.id ? usedShiftIds.has(shift.id) : false;
+              const TD = "border-secondary/50 border p-2";
 
               return (
                 <tr key={shift.id}>
                   {/* Name */}
-                  <td className="border p-2">
+                  <td className={`${TD}`}>
                     <input
                       value={shift.name}
                       onChange={(e) =>
                         updateShift(shift.id, "name", e.target.value)
                       }
-                      className={`w-full rounded border px-2 py-1 ${shift.color}`}
+                      className={`w-full rounded border px-2 py-1 dark:border-none dark:bg-transparent ${shift.color}`}
                     />
                   </td>
 
                   {/* Start */}
-                  <td className="border p-2">
+                  <td className={`${TD}`}>
                     <input
                       type="time"
                       value={shift.startTime}
                       onChange={(e) =>
                         updateShift(shift.id, "startTime", e.target.value)
                       }
-                      className="rounded border px-2 py-1"
+                      className="border-secondary/50 text-primary/80 rounded border px-2 py-1 dark:[color-scheme:dark]"
                     />
                   </td>
 
                   {/* End */}
-                  <td className="border p-2">
+                  <td className={`${TD}`}>
                     <input
                       type="time"
                       value={shift.endTime}
                       onChange={(e) =>
                         updateShift(shift.id, "endTime", e.target.value)
                       }
-                      className="rounded border px-2 py-1"
+                      className="border-secondary/50 text-primary/80 rounded border px-2 py-1 dark:[color-scheme:dark]"
                     />
                   </td>
 
                   {/* Color */}
-                  <td className="border p-2">
+                  <td className={`${TD}`}>
                     <div className="flex gap-2">
                       {SHIFT_COLORS.map((color) => (
                         <button
@@ -186,8 +189,8 @@ export default function ShiftSetting({
                           }
                           className={`h-6 w-6 rounded-full border ${color.preview} ${
                             shift.color === color.value
-                              ? "ring-2 ring-black ring-offset-2"
-                              : ""
+                              ? "ring-2 ring-black ring-offset-2 dark:opacity-80 dark:ring-offset-0"
+                              : "dark:opacity-40"
                           }`}
                         />
                       ))}
@@ -195,7 +198,7 @@ export default function ShiftSetting({
                   </td>
 
                   {/* Actions */}
-                  <td className="border p-2">
+                  <td className={`${TD}`}>
                     <button
                       onClick={() => deleteShift(shift.id)}
                       disabled={shifts.length <= 1 || isUsed}

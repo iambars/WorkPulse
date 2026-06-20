@@ -22,11 +22,6 @@ export default function CalendarGrid({
   activeShift,
   defaultShift,
 }: CalendarGridProps) {
-  // const shiftMap = useMemo(
-  //   () => Object.fromEntries(shifts.map((shift) => [shift.id, shift])),
-  //   [shifts],
-  // );
-
   const getShift = (day: DaySchedule) => {
     if (!day.workDay) return null;
 
@@ -64,9 +59,12 @@ export default function CalendarGrid({
     <>
       {/* WEEK HEADER */}
       <div className="mb-4 grid grid-cols-7 gap-2 text-center text-sm font-semibold">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="rounded bg-gray-100 p-2">
-            {d}
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div
+            key={day}
+            className="text-primary/90 dark:text-primary/80 border-secondary/50 rounded-lg p-2 dark:border"
+          >
+            {day}
           </div>
         ))}
       </div>
@@ -77,7 +75,7 @@ export default function CalendarGrid({
         {Array.from({ length: offset }).map((_, i) => (
           <div
             key={`prev-${i}`}
-            className="min-h-28 rounded-lg border bg-gray-50 p-2 text-gray-300"
+            className="min-h-28 rounded-lg border bg-gray-50 p-2 text-gray-300 dark:bg-transparent dark:opacity-15"
           >
             {prevMonthLastDay - offset + i + 1}
           </div>
@@ -93,10 +91,10 @@ export default function CalendarGrid({
               key={day.date}
               type="button"
               onClick={() => handleDayClick(day)}
-              className={`min-h-28 rounded-lg border p-2 text-left transition hover:scale-[1.01] ${
+              className={`min-h-28 rounded-lg border p-2 text-left transition hover:scale-[1.01] dark:opacity-85 ${
                 day.workDay
                   ? (shift?.color ?? "bg-gray-100")
-                  : "bg-gray-100 text-gray-400"
+                  : "dark:text-primary/70 dark:border-primary/40 bg-gray-100 text-gray-400 dark:bg-transparent"
               }`}
             >
               {/* header */}
@@ -140,7 +138,7 @@ export default function CalendarGrid({
         }).map((_, i) => (
           <div
             key={`next-${i}`}
-            className="min-h-28 rounded-lg border bg-gray-50 p-2 text-gray-300"
+            className="min-h-28 rounded-lg border bg-gray-50 p-2 text-gray-300 dark:bg-transparent dark:opacity-15"
           >
             {i + 1}
           </div>

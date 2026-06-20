@@ -21,6 +21,14 @@ type Props = {
 
 type AttendanceValues = Record<string, { timeIn: string; timeOut: string }>;
 
+const TD = (isRestDay?: boolean, children) => (
+  <td
+    className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+  >
+    {children}
+  </td>
+);
+
 export default function AttendanceTable({
   shifts,
   initialSchedules,
@@ -192,18 +200,21 @@ export default function AttendanceTable({
               attendance,
             );
             const status = getStatus(row, timeIn, hours);
+            const tdClass =
+              "border-secondary/50 dark:border-secondary/25 text-primary/80 dark:text-secondary/80 border p-2";
 
             return (
               <tr key={row.date}>
                 {/* Date */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   {formatDate(row.date)}
                 </td>
+
                 {/* SHIFT (colored badge) */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   <span
                     className={`inline-block rounded px-2 py-1 text-xs dark:border-none dark:bg-transparent ${row.color}`}
@@ -213,18 +224,18 @@ export default function AttendanceTable({
                 </td>
                 {/* SCHEDULE */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   {row.scheduledIn ?? "-"}
                 </td>
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   {row.scheduledOut ?? "-"}
                 </td>
                 {/* ACTUAL */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-primary border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   <input
                     type="time"
@@ -232,12 +243,12 @@ export default function AttendanceTable({
                     onChange={(e) =>
                       updateAttendance(row.date, "timeIn", e.target.value)
                     }
-                    className="w-full rounded-lg border border-blue-600/50 px-2 py-1 [color-scheme:dark] dark:border-blue-800 dark:opacity-50"
+                    className="w-full rounded-lg border border-blue-600/50 px-2 py-1 dark:border-blue-800 dark:[color-scheme:dark] dark:opacity-50"
                     // disabled={row.isRestDay}
                   />
                 </td>
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-primary border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   <input
                     type="time"
@@ -251,20 +262,20 @@ export default function AttendanceTable({
                 </td>
                 {/* HOURS */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   {hours?.toFixed(2) ?? "-"}
                 </td>
                 {/* OT */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   {ot?.toFixed(2) ?? "-"}
                 </td>
 
                 {/* STATUS (colored badge) */}
                 <td
-                  className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
+                  className={`${tdClass} ${row.isRestDay && "bg-blue-400/30 dark:bg-blue-400/5"}`}
                 >
                   <span
                     className={`inline-block rounded px-2 py-1 text-xs font-medium dark:bg-transparent ${getStatusStyle(
