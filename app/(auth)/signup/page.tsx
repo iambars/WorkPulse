@@ -109,7 +109,7 @@ export default function SignUpPage() {
 
           <button
             type="submit"
-            className="border-border w-full rounded-md border bg-black/75 py-2 text-white/90 transition hover:bg-gray-800"
+            className="w-full rounded-lg bg-blue-500 py-2 text-white shadow-lg transition hover:bg-blue-600"
           >
             {pending ? "Signing up" : "Create Account"}
           </button>
