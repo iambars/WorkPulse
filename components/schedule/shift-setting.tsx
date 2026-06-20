@@ -224,7 +224,9 @@ export default function ShiftSetting({
           onClick={handleSave}
           disabled={!hasChanges}
           className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
-            hasChanges ? "hover:bg-gray-50" : "cursor-not-allowed opacity-50"
+            hasChanges
+              ? "dark:text-secondary dark:border-secondary/40 transition duration-300 hover:bg-gray-50 dark:hover:border-blue-500 dark:hover:bg-blue-500 dark:hover:text-white/90"
+              : "cursor-not-allowed opacity-50"
           } `}
         >
           Save Changes

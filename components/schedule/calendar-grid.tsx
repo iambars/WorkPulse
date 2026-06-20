@@ -93,7 +93,8 @@ export default function CalendarGrid({
               onClick={() => handleDayClick(day)}
               className={`min-h-28 rounded-lg border p-2 text-left transition hover:scale-[1.01] dark:opacity-85 ${
                 day.workDay
-                  ? (shift?.color ?? "bg-gray-100")
+                  ? (shift?.color ??
+                    "dark:border-primary/60 bg-gray-100 dark:bg-transparent")
                   : "dark:text-primary/70 dark:border-primary/40 bg-gray-100 text-gray-400 dark:bg-transparent"
               }`}
             >

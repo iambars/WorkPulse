@@ -164,7 +164,11 @@ export default function ScheduleClient({ shifts, initialSchedules }: Props) {
         <button
           onClick={handleSave}
           disabled={isSaving || !hasChanges}
-          className={`hover:text-primary dark:text-primary rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800/80 ${hasChanges ? "hover:bg-blue-400/80" : "cursor-not-allowed opacity-50"}`}
+          className={`hover:text-primary dark:text-primary rounded-2xl border border-blue-500/80 px-4 py-2 text-blue-800/80 ${
+            isSaving || !hasChanges
+              ? "cursor-not-allowed opacity-50"
+              : "hover:bg-blue-400/80"
+          }`}
         >
           {isSaving ? "Saving..." : "Save Schedule"}
         </button>
