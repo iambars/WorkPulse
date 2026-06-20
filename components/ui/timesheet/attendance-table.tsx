@@ -21,14 +21,6 @@ type Props = {
 
 type AttendanceValues = Record<string, { timeIn: string; timeOut: string }>;
 
-const TD = (isRestDay?: boolean, children) => (
-  <td
-    className={`border-secondary/50 dark:border-secondary/20 text-primary/80 dark:text-secondary/80 border p-2 ${isRestDay && "bg-blue-400/30 dark:bg-blue-400/10"}`}
-  >
-    {children}
-  </td>
-);
-
 export default function AttendanceTable({
   shifts,
   initialSchedules,
