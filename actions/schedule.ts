@@ -38,5 +38,6 @@ export async function saveSchedule(days: DaySchedule[]) {
         },
       }),
     ),
+    { timeout: 10000 },
   );
 }
